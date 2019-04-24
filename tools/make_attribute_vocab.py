@@ -79,7 +79,7 @@ for tok in vocab:
     # if max(sc.salience(tok, attribute='pre'), sc.salience(tok, attribute='post')) > r:
     #     print(tok)
     if max(negative_salience, positive_salience) > r:
-        print(tok)
+        print(tok, negative_salience, positive_salience)
 
 # TODO: this seems to be doing all the delete module, but without the n-gram
 

@@ -2,4 +2,4 @@ delete attribute markers
 - original pryzant repo uses 1-grams, paper uses 4-grams
 - to recreate provided vocab.attribute, run make_attribute_vocab.py on the provided vocab file
   with sentiment.train.0 and sentiment.train.1 and salience threshold 5
-- using a higher salience threshold --> we're running an experiment on grenache to determine effect
+- using a higher salience threshold --> appears to increase bleu scores
