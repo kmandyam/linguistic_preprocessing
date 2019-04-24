@@ -72,8 +72,13 @@ sc = SalienceCalculator(corpus1, corpus2)
 # a certain threshold, then we keep the token in the attribute vocab, otherwise we
 # don't. Pipe the output to an attribute_vocab.txt
 for tok in vocab:
-    #    print(tok, sc.salience(tok))
-    if max(sc.salience(tok, attribute='pre'), sc.salience(tok, attribute='post')) > r:
+    # print(tok, sc.salience(tok))
+    negative_salience = sc.salience(tok, attribute='pre')
+    positive_salience = sc.salience(tok, attribute='post')
+    # print(tok, negative_salience, positive_salience)
+    # if max(sc.salience(tok, attribute='pre'), sc.salience(tok, attribute='post')) > r:
+    #     print(tok)
+    if max(negative_salience, positive_salience) > r:
         print(tok)
 
 # TODO: this seems to be doing all the delete module, but without the n-gram
