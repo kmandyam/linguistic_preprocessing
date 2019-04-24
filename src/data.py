@@ -9,7 +9,6 @@ from torch.autograd import Variable
 
 from src.cuda import CUDA
 
-
 class CorpusSearcher(object):
     def __init__(self, query_corpus, key_corpus, value_corpus, vectorizer, make_binary=True):
         self.vectorizer = vectorizer
@@ -18,14 +17,17 @@ class CorpusSearcher(object):
         self.query_corpus = query_corpus
         self.key_corpus = key_corpus
         self.value_corpus = value_corpus
-        
+
         # rows = docs, cols = features
         self.key_corpus_matrix = self.vectorizer.transform(key_corpus)
         if make_binary:
-            self.key_corpus_matrix = (self.key_corpus_matrix != 0).astype(int) # make binary
+            self.key_corpus_matrix = (self.key_corpus_matrix != 0).astype(int)  # make binary
 
-        
     def most_similar(self, key_idx, n=10):
+        # at train time, this is the denoising thing, because we choose
+        # attributes that are close to the attribute in question based on
+        # word edit distance
+        # TODO: we want to verify that this works as expected
         query = self.query_corpus[key_idx]
 
         query_vec = self.vectorizer.transform([query])
@@ -37,13 +39,12 @@ class CorpusSearcher(object):
 
         # use the retrieved i to pick examples from the VALUE corpus
         selected = [
-            #(self.query_corpus[i], self.key_corpus[i], self.value_corpus[i], i, score) # useful for debugging 
-            (self.value_corpus[i], i, score) 
+            # (self.query_corpus[i], self.key_corpus[i], self.value_corpus[i], i, score) # useful for debugging
+            (self.value_corpus[i], i, score)
             for (score, i) in selected
         ]
 
         return selected
-
 
 def build_vocab_maps(vocab_file):
     assert os.path.exists(vocab_file), "The vocab file %s does not exist" % vocab_file
@@ -52,11 +53,14 @@ def build_vocab_maps(vocab_file):
     sos = '<s>'
     eos = '</s>'
 
+    # lines is all the words in the vocab
     lines = [x.strip() for x in open(vocab_file)]
 
+    # making sure that the vocab is formatted a certain way
     assert lines[0] == unk and lines[1] == pad and lines[2] == sos and lines[3] == eos, \
         "The first words in %s are not %s, %s, %s, %s" % (vocab_file, unk, pad, sos, eos)
 
+    # create a token to id and id to token map
     tok_to_id = {}
     id_to_tok = {}
     for i, vi in enumerate(lines):
@@ -64,14 +68,17 @@ def build_vocab_maps(vocab_file):
         id_to_tok[i] = vi
 
     # Extra vocab item for empty attribute lines
-    empty_tok_idx =  len(id_to_tok)
+    empty_tok_idx = len(id_to_tok)
     tok_to_id['<empty>'] = empty_tok_idx
     id_to_tok[empty_tok_idx] = '<empty>'
 
     return tok_to_id, id_to_tok
 
-
 def extract_attributes(line, attribute_vocab):
+    # how to retrieve attribute markers and content
+    # for each word in the line, if the token is in the attribute_vocab
+    # then we make it an attribute marker, otherwise, we make it part
+    # of the content
     content = []
     attribute = []
     for tok in line:
@@ -81,17 +88,24 @@ def extract_attributes(line, attribute_vocab):
             content.append(tok)
     return line, content, attribute
 
-
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
+    # get all the words in the attribute vocabulary
     attribute_vocab = set([x.strip() for x in open(attribute_vocab)])
 
+    # get all the lines in the source file (positive)
     src_lines = [l.strip().split() for l in open(src, 'r')]
+
+    # retrieve the original sentence, content, and attribute markers for
+    # each line in the source file
     src_lines, src_content, src_attribute = list(zip(
         *[extract_attributes(line, attribute_vocab) for line in src_lines]
     ))
+
+    # creating two maps, token to id and id to token for the source vocab (which is the full vocab)
     src_tok2id, src_id2tok = build_vocab_maps(config['data']['src_vocab'])
+
     # train time: just pick attributes that are close to the current (using word distance)
-    # we never need to do the TFIDF thing with the source because 
+    # we never need to do the TFIDF thing with the source because
     # test time is strictly in the src => tgt direction
     src_dist_measurer = CorpusSearcher(
         query_corpus=[' '.join(x) for x in src_attribute],
@@ -100,15 +114,23 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
         vectorizer=CountVectorizer(vocabulary=src_tok2id),
         make_binary=True
     )
+
+    # the Corpus Searcher class has a function which allows us to search for
+    # the most similar attributes to a given input (key_idx)
+    # we create a Corpus Searcher for the source file
     src = {
         'data': src_lines, 'content': src_content, 'attribute': src_attribute,
         'tok2id': src_tok2id, 'id2tok': src_id2tok, 'dist_measurer': src_dist_measurer
     }
 
+    # get all the lines in the target file and if it exists
+    # we get the lines, content, and attributes in the same way as above
     tgt_lines = [l.strip().split() for l in open(tgt, 'r')] if tgt else None
     tgt_lines, tgt_content, tgt_attribute = list(zip(
         *[extract_attributes(line, attribute_vocab) for line in tgt_lines]
     ))
+
+    # build the vocab maps again as above
     tgt_tok2id, tgt_id2tok = build_vocab_maps(config['data']['tgt_vocab'])
     # train time: just pick attributes that are close to the current (using word distance)
     if train_src is None or train_tgt is None:
@@ -136,19 +158,20 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     return src, tgt
 
 def sample_replace(lines, dist_measurer, sample_rate, corpus_idx):
+    # This is kinda where the denoising thing happens during training time
     """
     replace sample_rate * batch_size lines with nearby examples (according to dist_measurer)
-    not exactly the same as the paper (words shared instead of jaccaurd during train) but same idea
+    not exactly the same as the paper (words shared instead of jaccard during train) but same idea
     """
     out = [None for _ in range(len(lines))]
     for i, line in enumerate(lines):
         if random.random() < sample_rate:
             sims = dist_measurer.most_similar(corpus_idx + i)[1:]  # top match is the current line
             try:
-                line = next( (
+                line = next((
                     tgt_attr.split() for tgt_attr, _, _ in sims
-                    if set(tgt_attr.split()) != set(line[1:-1]) # and tgt_attr != ''   # TODO -- exclude blanks?
-                ) )
+                    if set(tgt_attr.split()) != set(line[1:-1])  # and tgt_attr != ''   # TODO -- exclude blanks?
+                ))
             # all the matches are blanks
             except StopIteration:
                 line = []
@@ -161,45 +184,59 @@ def sample_replace(lines, dist_measurer, sample_rate, corpus_idx):
 
     return out
 
-
 def get_minibatch(lines, tok2id, index, batch_size, max_len, sort=False, idx=None,
-        dist_measurer=None, sample_rate=0.0):
+                  dist_measurer=None, sample_rate=0.0):
     """Prepare minibatch."""
     # FORCE NO SORTING because we care about the order of outputs
     #   to compare across systems
+
+    # add the start and end sentence token to each line in the appropriate section of the lines
+    # appropriate section being the range(index to index + batch_size)
     lines = [
         ['<s>'] + line[:max_len] + ['</s>']
         for line in lines[index:index + batch_size]
     ]
 
+    # this denoises some of the training examples
     if dist_measurer is not None:
         lines = sample_replace(lines, dist_measurer, sample_rate, index)
 
+    # get the lengths of all the lines and get the max length
     lens = [len(line) - 1 for line in lines]
     max_len = max(lens)
 
     unk_id = tok2id['<unk>']
+    # for each line in the set of lines (everything but the </s> token in the minibatch
+    # we get the array of tokens corresponding to those words
+    # and then we concat with the padding token and
+    # I think this multiplies the padding token so that everything
+    # is padded to the maximum length
     input_lines = [
         [tok2id.get(w, unk_id) for w in line[:-1]] +
         [tok2id['<pad>']] * (max_len - len(line) + 1)
         for line in lines
     ]
 
+    # for each line in lines, we do the same thing as above
+    # except we don't include the <s> token
     output_lines = [
         [tok2id.get(w, unk_id) for w in line[1:]] +
         [tok2id['<pad>']] * (max_len - len(line) + 1)
         for line in lines
     ]
 
+    # tells us which tokens are not padding
     mask = [
         ([1] * l) + ([0] * (max_len - l))
         for l in lens
     ]
 
+    # sort the sequence by descending length
     if sort:
         # sort sequence by descending length
         idx = [x[0] for x in sorted(enumerate(lens), key=lambda x: -x[1])]
 
+    # reorders the output data based on the sorting
     if idx is not None:
         lens = [lens[j] for j in idx]
         input_lines = [input_lines[j] for j in idx]
@@ -217,14 +254,17 @@ def get_minibatch(lines, tok2id, index, batch_size, max_len, sort=False, idx=Non
 
     return input_lines, output_lines, lens, mask, idx
 
-
 def minibatch(src, tgt, idx, batch_size, max_len, model_type, is_test=False):
     if not is_test:
+        # during training time, we train src to src half the time
+        # and tgt to tgt half the time
         use_src = random.random() < 0.5
         in_dataset = src if use_src else tgt
         out_dataset = in_dataset
+        # source attribute is 0, target attribute is 1
         attribute_id = 0 if use_src else 1
     else:
+        # during testing the in dataset is the source and out dataset is the target
         in_dataset = src
         out_dataset = tgt
         attribute_id = 1
@@ -245,11 +285,15 @@ def minibatch(src, tgt, idx, batch_size, max_len, model_type, is_test=False):
         attributes = (attribute_ids, None, None, None, None)
 
     elif model_type == 'delete_retrieve':
-        inputs =  get_minibatch(
+        # get the minibatch for all content in the source file
+        inputs = get_minibatch(
             in_dataset['content'], in_dataset['tok2id'], idx, batch_size, max_len, sort=True)
-        attributes =  get_minibatch(
+        # get the minibatch for all content in the target attribute (but perturb some of the attributes)
+        attributes = get_minibatch(
             out_dataset['attribute'], out_dataset['tok2id'], idx, batch_size, max_len, idx=inputs[-1],
             dist_measurer=out_dataset['dist_measurer'], sample_rate=0.0 if is_test else 0.25)
+        # basically get the targets, this is the out_datset's data key which are all the
+        # original lines
         outputs = get_minibatch(
             out_dataset['data'], out_dataset['tok2id'], idx, batch_size, max_len, idx=inputs[-1])
 
@@ -265,7 +309,6 @@ def minibatch(src, tgt, idx, batch_size, max_len, model_type, is_test=False):
         raise Exception('Unsupported model_type: %s' % model_type)
 
     return inputs, attributes, outputs
-
 
 def unsort(arr, idx):
     """unsort a list given idx: a list of each element's 'origin' index pre-sorting

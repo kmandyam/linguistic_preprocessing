@@ -13,10 +13,16 @@ print('<s>')
 print('</s>')
 
 c = Counter()
+
+# argv 1 is entire corpus file (source and target concatenated)
+# create a counter of every possible token (word in the corpus)
 for l in open(sys.argv[1]):
     for tok in l.strip().split():
         c[tok] += 1
 
+# argv 2 is the vocab size, get the vocab size most common
+# words in the counter, and print the word
+# we pipe the output to a vocab.txt file
 for tok, _ in c.most_common(int(sys.argv[2])):
     print(tok)
 

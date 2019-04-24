@@ -19,8 +19,6 @@ from src.cuda import CUDA
 import src.data as data
 import src.models as models
 
-
-
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config",
@@ -64,6 +62,13 @@ console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 
 logging.info('Reading data ...')
+# src, tgt, src_test, and tgt_test contains the following information
+# data: all lines in the file
+# content: content for each line
+# attribute: attribute markers for each line
+# tok2id: a token to id map
+# id2tok: an id to token map
+# dist_measurer: a CorpusSearcher object which allows calculation of tfidf
 src, tgt = data.read_nmt_data(
     src=config['data']['src'],
     config=config,
@@ -71,6 +76,9 @@ src, tgt = data.read_nmt_data(
     attribute_vocab=config['data']['attribute_vocab']
 )
 
+# src_test and tgt_test are different from above
+# in that they configure the CorpusSearcher to look for target attributes.
+# note that the last two named variables are set
 src_test, tgt_test = data.read_nmt_data(
     src=config['data']['src_test'],
     config=config,
@@ -81,13 +89,14 @@ src_test, tgt_test = data.read_nmt_data(
 )
 logging.info('...done!')
 
-
+# set some basic variables
 batch_size = config['data']['batch_size']
 max_length = config['data']['max_len']
 src_vocab_size = len(src['tok2id'])
 tgt_vocab_size = len(tgt['tok2id'])
 
-
+# create a mask of length target vocab size (should be the same as source
+# vocab size though)
 weight_mask = torch.ones(tgt_vocab_size)
 weight_mask[tgt['tok2id']['<pad>']] = 0
 loss_criterion = nn.CrossEntropyLoss(weight=weight_mask)
@@ -98,6 +107,7 @@ if CUDA:
 torch.manual_seed(config['training']['random_seed'])
 np.random.seed(config['training']['random_seed'])
 
+# Create a pretty standard seq2seq model
 model = models.SeqModel(
     src_vocab_size=src_vocab_size,
     tgt_vocab_size=tgt_vocab_size,
@@ -106,7 +116,9 @@ model = models.SeqModel(
     config=config
 )
 
-logging.info('MODEL HAS %s params' %  model.count_params())
+# get information about number of parameters in the model
+# try to load the model from the working directory
+logging.info('MODEL HAS %s params' % model.count_params())
 model, start_epoch = models.attempt_load_model(
     model=model,
     checkpoint_dir=working_dir)
@@ -115,7 +127,7 @@ if CUDA:
 
 writer = SummaryWriter(working_dir)
 
-
+# we set the appropriate optimizer (in our case, adam)
 if config['training']['optimizer'] == 'adam':
     lr = config['training']['learning_rate']
     optimizer = optim.Adam(model.parameters(), lr=lr)
@@ -131,11 +143,14 @@ words_since_last_report = 0
 losses_since_last_report = []
 best_metric = 0.0
 best_epoch = 0
-cur_metric = 0.0 # log perplexity or BLEU
+cur_metric = 0.0  # log perplexity or BLEU
 num_batches = len(src['content']) / batch_size
 
 STEP = 0
+# run for how many ever epochs based on whether we were able to
+# load model from a checkpoint
 for epoch in range(start_epoch, config['training']['epochs']):
+    # we checkpoint based on the best metric (which is either log perplexity or BLEU)
     if cur_metric > best_metric:
         # rm old checkpoint
         for ckpt_path in glob.glob(working_dir + '/model.*'):
@@ -147,19 +162,23 @@ for epoch in range(start_epoch, config['training']['epochs']):
         best_epoch = epoch - 1
 
     losses = []
+    # we loop through each of the training examples (just the content though)
     for i in range(0, len(src['content']), batch_size):
-
+        # TODO: not sure what the overfit functionality is supposed to do
+        # we haven't currently set this though
         if args.overfit:
             i = 50
 
         batch_idx = i / batch_size
 
+        # get a mini batch with input, attribute and output
+        # this allows us to use the model
         input_content, input_aux, output = data.minibatch(
             src, tgt, i, batch_size, max_length, config['model']['model_type'])
         input_lines_src, _, srclens, srcmask, _ = input_content
         input_ids_aux, _, auxlens, auxmask, _ = input_aux
         input_lines_tgt, output_lines_tgt, _, _, _ = output
-        
+
         decoder_logit, decoder_probs = model(
             input_lines_src, input_lines_tgt, srcmask, srclens,
             input_ids_aux, auxlens, auxmask)
@@ -180,8 +199,8 @@ for epoch in range(start_epoch, config['training']['epochs']):
 
         optimizer.step()
 
+        # TODO: not sure what the args.overfit parameter does
         if args.overfit or batch_idx % config['training']['batches_per_report'] == 0:
-
             s = float(time.time() - start_since_last_report)
             wps = (batch_size * config['training']['batches_per_report']) / s
             avg_loss = np.mean(losses_since_last_report)
@@ -202,7 +221,7 @@ for epoch in range(start_epoch, config['training']['epochs']):
     start = time.time()
     model.eval()
     dev_loss = evaluation.evaluate_lpp(
-            model, src_test, tgt_test, config)
+        model, src_test, tgt_test, config)
 
     writer.add_scalar('eval/loss', dev_loss, epoch)
 
