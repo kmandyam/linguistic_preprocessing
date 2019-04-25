@@ -2,4 +2,10 @@ delete attribute markers
 - original pryzant repo uses 1-grams, paper uses 4-grams
 - to recreate provided vocab.attribute, run make_attribute_vocab.py on the provided vocab file
   with sentiment.train.0 and sentiment.train.1 and salience threshold 5
-- using a higher salience threshold --> appears to increase bleu scores
+- using a higher salience threshold --> appears to increase bleu scores (check experiments.txt)
+
+- this repo doesn't look at the scores during deletion, there are two options with n-gram deletion
+    - enumerate all n-grams, check if the gram is in the attribute markers (go backwards from largest
+      to smallest), periodically delete
+    - figure out a way to incorporate scores, enumerate all ngrams, filter out non-markers,
+      sort by score and repeatedly remove until we have nothing else left

@@ -14,6 +14,9 @@ print('</s>')
 
 c = Counter()
 
+# TODO: generate all n-grams up to 4
+# TODO: add n-grams to the counter and pick the top several
+
 # argv 1 is entire corpus file (source and target concatenated)
 # create a counter of every possible token (word in the corpus)
 for l in open(sys.argv[1]):

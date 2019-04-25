@@ -79,6 +79,7 @@ def extract_attributes(line, attribute_vocab):
     # for each word in the line, if the token is in the attribute_vocab
     # then we make it an attribute marker, otherwise, we make it part
     # of the content
+    # TODO: need to modify this function to handle n-gram tokens
     content = []
     attribute = []
     for tok in line:

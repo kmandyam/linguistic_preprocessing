@@ -3,4 +3,4 @@ Keeping Track of Some of the Experiments We're Running
 Model   Epochs  Gram-Degree Salience-Threshold  Vocab   train_config    bleu_score
 
 delete  70  1   15  original_vocab  orignal_train   20.751574136434648
-delete  70  1   5   original_vocab  original_train  
+delete  70  1   5   original_vocab  original_train  18.332891523617644
