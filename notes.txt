@@ -3,6 +3,8 @@ delete attribute markers
 - to recreate provided vocab.attribute, run make_attribute_vocab.py on the provided vocab file
   with sentiment.train.0 and sentiment.train.1 and salience threshold 5
 - using a higher salience threshold --> appears to increase bleu scores (check experiments.txt)
+- it looks like we need to be using a higher salience threshold when we calculate ngram attributes,
+  the resulting file is really large with a threshold of 15
 
 - this repo doesn't look at the scores during deletion, there are two options with n-gram deletion
     - enumerate all n-grams, check if the gram is in the attribute markers (go backwards from largest

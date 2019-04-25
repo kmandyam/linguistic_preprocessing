@@ -115,7 +115,8 @@ def calculate_attribute_markers(corpus):
                 negative_salience = sc.salience(gram, attribute='pre')
                 positive_salience = sc.salience(gram, attribute='post')
                 if max(negative_salience, positive_salience) > r:
-                    print(gram, negative_salience, positive_salience)
+                    # print(gram, negative_salience, positive_salience)
+                    print(gram)
 
 
 calculate_attribute_markers(corpus1)
