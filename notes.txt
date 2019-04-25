@@ -5,6 +5,10 @@ delete attribute markers
 - using a higher salience threshold --> appears to increase bleu scores (check experiments.txt)
 - it looks like we need to be using a higher salience threshold when we calculate ngram attributes,
   the resulting file is really large with a threshold of 15
+- the part I don't understand about this implementation is that they don't delete attribute markers
+  with respect to the attribute. The markers are predetermined and we just delete if they show up.
+  But the predetermined markers may not necessarily be for the attribute in question that we're
+  deleting.
 
 - this repo doesn't look at the scores during deletion, there are two options with n-gram deletion
     - enumerate all n-grams, check if the gram is in the attribute markers (go backwards from largest

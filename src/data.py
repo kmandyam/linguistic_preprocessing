@@ -8,6 +8,7 @@ import torch
 from torch.autograd import Variable
 
 from src.cuda import CUDA
+from nltk import ngrams
 
 class CorpusSearcher(object):
     def __init__(self, query_corpus, key_corpus, value_corpus, vectorizer, make_binary=True):
@@ -79,15 +80,34 @@ def extract_attributes(line, attribute_vocab):
     # for each word in the line, if the token is in the attribute_vocab
     # then we make it an attribute marker, otherwise, we make it part
     # of the content
-    # TODO: need to modify this function to handle n-gram tokens
-    content = []
-    attribute = []
-    for tok in line:
-        if tok in attribute_vocab:
-            attribute.append(tok)
-        else:
-            content.append(tok)
-    return line, content, attribute
+
+    # content = []
+    # attribute = []
+    # for tok in line:
+    #     if tok in attribute_vocab:
+    #         attribute.append(tok)
+    #     else:
+    #         content.append(tok)
+    grams = []
+    for i in range(1, 5):
+        i_grams = [
+            " ".join(gram)
+            for gram in ngrams(line, i)
+        ]
+        grams.extend(i_grams)
+
+    attribute_markers = [
+        gram for gram in grams if gram in attribute_vocab
+    ]
+    content = " ".join(line)
+
+    deleted_markers = []
+    for marker in attribute_markers:
+        if marker in content:
+            deleted_markers.append(marker)
+            content = content.replace(marker, "")
+
+    return line, content.split(), deleted_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
     # get all the words in the attribute vocabulary
