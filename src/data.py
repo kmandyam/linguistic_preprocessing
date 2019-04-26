@@ -101,6 +101,7 @@ def extract_attributes(line, attribute_vocab):
     ]
     content = " ".join(line)
 
+    # TODO: probably want to base this off the scores
     deleted_markers = []
     for marker in attribute_markers:
         if marker in content:
