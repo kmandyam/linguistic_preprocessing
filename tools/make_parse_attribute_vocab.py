@@ -1,12 +1,14 @@
 """
-python make_attribute_vocab.py [vocab] [corpus1] [corpus2] r
+python make_ngram_attribute_vocab.py [vocab] [corpus1] [corpus2] r
 
 subsets a [vocab] file by finding the words most associated with
 one of two corpuses. threshold is r ( # in corpus_a  / # in corpus_b )
+uses ngrams
 """
 import sys
-from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
+from nltk import ngrams
 
 class SalienceCalculator(object):
     def __init__(self, pre_corpus, post_corpus):
@@ -40,41 +42,33 @@ class SalienceCalculator(object):
         else:
             return (post_count + lmbda) / (pre_count + lmbda)
 
-# create a set of all words in the vocab
-vocab = set([w.strip() for i, w in enumerate(open(sys.argv[1]))])
-
-# get all the words in the source corpus
-# if it's not in the vocab file, we unk the word
-# produces an array
-corpus1 = sys.argv[2]
-corpus1 = [
-    w if w in vocab else '<unk>'
-    for l in open(corpus1)
-    for w in l.strip().split()
+corpus1_parse_candidates = [
+    l.strip().split()
+    for l in open(sys.argv[2])
 ]
 
-# get all the words in the target corpus
-# if it's not in the vocab file, we unk the word
-# produces an array
-corpus2 = sys.argv[3]
-corpus2 = [
-    w if w in vocab else '<unk>'
-    for l in open(corpus2)
-    for w in l.strip().split()
+corpus2_parse_candidates = [
+    l.strip().split()
+    for l in open(sys.argv[3])
 ]
 
 # the salience ratio
 r = float(sys.argv[4])
 
-sc = SalienceCalculator(corpus1, corpus2)
+# don't need to UNK because we do that before computing the
+# parses anyways
 
-# for each token in the vocab, if the salience with respect to the attribute is higher than
-# a certain threshold, then we keep the token in the attribute vocab, otherwise we
-# don't. Pipe the output to an attribute_vocab.txt
-for tok in vocab:
-    #    print(tok, sc.salience(tok))
-    if max(sc.salience(tok, attribute='pre'), sc.salience(tok, attribute='post')) > r:
-        print(tok)
+sc = SalienceCalculator(corpus1_parse_candidates, corpus2_parse_candidates)
 
-# this seems to be doing all the delete module, but without the n-gram
 
+def calculate_attribute_markers(corpus):
+    for parse_candidate in corpus:
+        negative_salience = sc.salience(parse_candidate, attribute="pre")
+        positive_salience = sc.salience(parse_candidate, attribute="post")
+
+        if max(negative_salience, positive_salience) > r:
+            print(parse_candidate)
+
+
+calculate_attribute_markers(corpus1_parse_candidates)
+calculate_attribute_markers(corpus2_parse_candidates)
