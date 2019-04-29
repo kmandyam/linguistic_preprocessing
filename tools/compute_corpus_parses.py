@@ -9,9 +9,6 @@ in a corpus given the vocab
 # unk words in the sentence that aren't in the vocabulary
 # for each sentence in the corpus, get all span candidates as an array
     # this part is the equivalent of getting all the ngrams in a sentence
-# pass the array into the CountVectorizer (without the ngram argument)
-    # we will do this part when we actually choose which of these span candidates
-    # are attribute markers
 
 import sys
 from parse import parse_sentence, retrieve_spans
