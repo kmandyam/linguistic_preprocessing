@@ -71,10 +71,13 @@ sc = SalienceCalculator(corpus1, corpus2)
 # for each token in the vocab, if the salience with respect to the attribute is higher than
 # a certain threshold, then we keep the token in the attribute vocab, otherwise we
 # don't. Pipe the output to an attribute_vocab.txt
+print("marker", "negative_score", "positive_score")
 for tok in vocab:
     #    print(tok, sc.salience(tok))
-    if max(sc.salience(tok, attribute='pre'), sc.salience(tok, attribute='post')) > r:
-        print(tok)
+    negative_salience = sc.salience(tok, attribute='pre')
+    positive_salience = sc.salience(tok, attribute='post')
+    if max(negative_salience, positive_salience) > r:
+        print(tok, negative_salience, positive_salience)
 
 # this seems to be doing all the delete module, but without the n-gram
 
