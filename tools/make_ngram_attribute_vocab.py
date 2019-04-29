@@ -75,7 +75,7 @@ corpus2 = unk_corpus(corpus2_sentences)
 
 sc = SalienceCalculator(corpus1, corpus2)
 
-
+print("marker", "negative_score", "positive_score")
 def calculate_attribute_markers(corpus):
     for sentence in corpus:
         for i in range(1, 5):
@@ -88,8 +88,8 @@ def calculate_attribute_markers(corpus):
                 negative_salience = sc.salience(gram, attribute='pre')
                 positive_salience = sc.salience(gram, attribute='post')
                 if max(negative_salience, positive_salience) > r:
-                    # print(gram, negative_salience, positive_salience)
-                    print(gram)
+                    print(gram, negative_salience, positive_salience)
+                    # print(gram)
 
 
 calculate_attribute_markers(corpus1)
