@@ -16,7 +16,7 @@
     "src_vocab": "data/yelp/vocab",
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
-    "attribute_vocab": "data/yelp/ngram.vocab.15.attribute",
+    "attribute_vocab": "attribute_markers/ngram.15.score",
     "batch_size": 64,
     "max_len": 50,
     "working_dir": "working_dir"

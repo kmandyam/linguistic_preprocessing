@@ -75,7 +75,7 @@ def build_vocab_maps(vocab_file):
 
     return tok_to_id, id_to_tok
 
-def extract_attributes(line, attribute_vocab):
+def extract_attributes(line, pre_attr, post_attr, attribute="pre"):
     # how to retrieve attribute markers and content
     # for each word in the line, if the token is in the attribute_vocab
     # then we make it an attribute marker, otherwise, we make it part
@@ -88,6 +88,8 @@ def extract_attributes(line, attribute_vocab):
     #         attribute.append(tok)
     #     else:
     #         content.append(tok)
+    attribute_vocab = pre_attr if attribute == "pre" else post_attr
+    # import pdb; pdb.set_trace()
     grams = []
     for i in range(1, 5):
         i_grams = [
@@ -95,24 +97,36 @@ def extract_attributes(line, attribute_vocab):
             for gram in ngrams(line, i)
         ]
         grams.extend(i_grams)
-
+    # import pdb; pdb.set_trace()
     attribute_markers = [
-        gram for gram in grams if gram in attribute_vocab
+        (gram, attribute_vocab[gram]) for gram in grams if gram in attribute_vocab
     ]
     content = " ".join(line)
+    attribute_markers.sort(key=lambda x: x[1], reverse=True)
 
-    # TODO: probably want to base this off the scores
     deleted_markers = []
-    for marker in attribute_markers:
+    for marker, score in attribute_markers:
         if marker in content:
             deleted_markers.append(marker)
             content = content.replace(marker, "")
-
+    # import pdb; pdb.set_trace()
     return line, content.split(), deleted_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
     # get all the words in the attribute vocabulary
-    attribute_vocab = set([x.strip() for x in open(attribute_vocab)])
+    pre_attr = {}
+    post_attr = {}
+
+    with open(attribute_vocab) as attr_file:
+        next(attr_file) # skip the header line
+        for line in attr_file:
+            split = line.strip().split()
+            pre_salience = split[-2]
+            post_salience = split[-1]
+            attr = ' '.join(split[:-2])
+            pre_attr[attr] = pre_salience
+            post_attr[attr] = post_salience
+    # attribute_vocab = set([x.strip() for x in open(attribute_vocab)])
 
     # get all the lines in the source file (positive)
     src_lines = [l.strip().split() for l in open(src, 'r')]
@@ -120,7 +134,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # retrieve the original sentence, content, and attribute markers for
     # each line in the source file
     src_lines, src_content, src_attribute = list(zip(
-        *[extract_attributes(line, attribute_vocab) for line in src_lines]
+        *[extract_attributes(line, pre_attr, post_attr, attribute="pre") for line in src_lines]
     ))
 
     # creating two maps, token to id and id to token for the source vocab (which is the full vocab)
@@ -149,7 +163,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # we get the lines, content, and attributes in the same way as above
     tgt_lines = [l.strip().split() for l in open(tgt, 'r')] if tgt else None
     tgt_lines, tgt_content, tgt_attribute = list(zip(
-        *[extract_attributes(line, attribute_vocab) for line in tgt_lines]
+        *[extract_attributes(line, pre_attr, post_attr, attribute="post") for line in tgt_lines]
     ))
 
     # build the vocab maps again as above
