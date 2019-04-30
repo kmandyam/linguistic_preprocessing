@@ -9,6 +9,7 @@ from torch.autograd import Variable
 
 from src.cuda import CUDA
 from nltk import ngrams
+from tools.parse import parse_sentence, retrieve_spans
 
 class CorpusSearcher(object):
     def __init__(self, query_corpus, key_corpus, value_corpus, vectorizer, make_binary=True):
@@ -75,42 +76,73 @@ def build_vocab_maps(vocab_file):
 
     return tok_to_id, id_to_tok
 
+def extract_attribute_markers(line, attribute_vocab, method="unigram"):
+    assert method in ["unigram", "ngram", "parse"]
+
+    if method == "unigram":
+        # just check for each token in line if it's in the attribute vocab
+        content = []
+        attribute = []
+        for tok in line:
+            if tok in attribute_vocab:
+                attribute.append(tok)
+            else:
+                content.append(tok)
+        return line, content, attribute
+    elif method == "ngram":
+        # generate all ngrams for the sentence
+        grams = []
+        for i in range(1, 5):
+            i_grams = [
+                " ".join(gram)
+                for gram in ngrams(line, i)
+            ]
+            grams.extend(i_grams)
+
+        # filter ngrams by whether they appear in the attribute_vocab
+        attribute_markers = [
+            (gram, attribute_vocab[gram]) for gram in grams if gram in attribute_vocab
+        ]
+
+        # sort attribute markers by score and prepare for deletion
+        content = " ".join(line)
+        attribute_markers.sort(key=lambda x: x[1], reverse=True)
+
+        # delete based on highest score first
+        deleted_markers = []
+        for marker, score in attribute_markers:
+            if marker in content:
+                deleted_markers.append(marker)
+                content = content.replace(marker, "")
+        return line, content.split(), deleted_markers
+    elif method == "parse":
+        # we want to generate a parse and get all the candidates for the sentence
+        parse = parse_sentence(line)
+        spans = retrieve_spans(parse)
+
+        attribute_markers = [
+            (span, attribute_vocab[span]) for span in spans if span in attribute_vocab
+        ]
+
+        # sort attribute markers by score and prepare for deletion
+        content = " ".join(line)
+        attribute_markers.sort(key=lambda x: x[1], reverse=True)
+
+        # delete based on highest score first
+        deleted_markers = []
+        for marker, score in attribute_markers:
+            if marker in content:
+                deleted_markers.append(marker)
+                content = content.replace(marker, "")
+        return line, content.split(), deleted_markers
+
+
 def extract_attributes(line, pre_attr, post_attr, attribute="pre"):
     # how to retrieve attribute markers and content
-    # for each word in the line, if the token is in the attribute_vocab
-    # then we make it an attribute marker, otherwise, we make it part
-    # of the content
-
-    # content = []
-    # attribute = []
-    # for tok in line:
-    #     if tok in attribute_vocab:
-    #         attribute.append(tok)
-    #     else:
-    #         content.append(tok)
+    # we currently have three methods of doing this, described above
     attribute_vocab = pre_attr if attribute == "pre" else post_attr
-    # import pdb; pdb.set_trace()
-    grams = []
-    for i in range(1, 5):
-        i_grams = [
-            " ".join(gram)
-            for gram in ngrams(line, i)
-        ]
-        grams.extend(i_grams)
-    # import pdb; pdb.set_trace()
-    attribute_markers = [
-        (gram, attribute_vocab[gram]) for gram in grams if gram in attribute_vocab
-    ]
-    content = " ".join(line)
-    attribute_markers.sort(key=lambda x: x[1], reverse=True)
-
-    deleted_markers = []
-    for marker, score in attribute_markers:
-        if marker in content:
-            deleted_markers.append(marker)
-            content = content.replace(marker, "")
-    # import pdb; pdb.set_trace()
-    return line, content.split(), deleted_markers
+    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, method="ngram")
+    return line, content, attribute_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
     # get all the words in the attribute vocabulary
