@@ -116,6 +116,7 @@ def extract_attribute_markers(line, attribute_vocab, method="unigram"):
                 content = content.replace(marker, "")
         return line, content.split(), deleted_markers
     elif method == "parse":
+        # TODO: this function is super slow right now, pre-process the parses in a better way
         # we want to generate a parse and get all the candidates for the sentence
         parse = parse_sentence(' '.join(line))
         spans = retrieve_spans(parse)
@@ -158,7 +159,6 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
             attr = ' '.join(split[:-2])
             pre_attr[attr] = pre_salience
             post_attr[attr] = post_salience
-    # attribute_vocab = set([x.strip() for x in open(attribute_vocab)])
 
     # get all the lines in the source file (positive)
     src_lines = [l.strip().split() for l in open(src, 'r')]

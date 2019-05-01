@@ -103,5 +103,4 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-attribute_markers/*
 working_dir/*

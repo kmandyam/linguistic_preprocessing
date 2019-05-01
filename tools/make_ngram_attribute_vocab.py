@@ -10,9 +10,9 @@ from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import numpy as np
 from nltk import ngrams
 
-class SalienceCalculator(object):
-    def __init__(self, pre_corpus, post_corpus):
-        self.vectorizer = CountVectorizer(ngram_range=(1, 4))
+class NgramSalienceCalculator(object):
+    def __init__(self, pre_corpus, post_corpus, tokenize):
+        self.vectorizer = CountVectorizer(tokenizer=tokenize)
 
         pre_count_matrix = self.vectorizer.fit_transform(pre_corpus)
         self.pre_vocab = self.vectorizer.vocabulary_
@@ -26,7 +26,6 @@ class SalienceCalculator(object):
 
     def salience(self, feature, attribute='pre', lmbda=0.5):
         assert attribute in ['pre', 'post']
-
         if feature not in self.pre_vocab:
             pre_count = 0.0
         else:
@@ -55,6 +54,17 @@ corpus2_sentences = [
     for l in open(sys.argv[3])
 ]
 
+def tokenize(text):
+    text = text.split()
+    grams = []
+    for i in range(1, 5):
+        i_grams = [
+            " ".join(gram)
+            for gram in ngrams(text, i)
+        ]
+        grams.extend(i_grams)
+    return grams
+
 # the salience ratio
 r = float(sys.argv[4])
 
@@ -73,7 +83,7 @@ def unk_corpus(sentences):
 corpus1 = unk_corpus(corpus1_sentences)
 corpus2 = unk_corpus(corpus2_sentences)
 
-sc = SalienceCalculator(corpus1, corpus2)
+sc = NgramSalienceCalculator(corpus1, corpus2, tokenize)
 
 print("marker", "negative_score", "positive_score")
 def calculate_attribute_markers(corpus):

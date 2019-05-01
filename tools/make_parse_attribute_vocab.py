@@ -1,5 +1,5 @@
 """
-python make_ngram_attribute_vocab.py [vocab] [corpus1 parse candidates] [corpus2 parse candidates] r
+python make_ngram_attribute_vocab.py [corpus1 parse candidates] [corpus2 parse candidates] r
 
 subsets a [vocab] file by finding the words most associated with
 one of two corpuses. threshold is r ( # in corpus_a  / # in corpus_b )
@@ -15,7 +15,7 @@ import sys
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
 
-class SalienceCalculator(object):
+class ParseSalienceCalculator(object):
     def __init__(self, pre_corpus, post_corpus, tokenize):
 
         self.vectorizer = CountVectorizer(tokenizer=tokenize)
@@ -50,34 +50,35 @@ class SalienceCalculator(object):
 
 corpus1_parse_candidates = [
     l.strip()
-    for l in open(sys.argv[2])
+    for l in open(sys.argv[1])
 ]
 
 corpus2_parse_candidates = [
     l.strip()
-    for l in open(sys.argv[3])
+    for l in open(sys.argv[2])
 ]
 
 def tokenize(text):
     return [text]
 
-# the salience ratio
-r = float(sys.argv[4])
+# the salience
+#  ratio
+r = float(sys.argv[3])
 
 # don't need to UNK because we do that before computing the
 # parses anyways
 
-sc = SalienceCalculator(corpus1_parse_candidates, corpus2_parse_candidates, tokenize)
+sc = ParseSalienceCalculator(corpus1_parse_candidates, corpus2_parse_candidates, tokenize)
 
-# print("marker", "negative_salience", "positive_salience")
+print("marker", "negative_salience", "positive_salience")
 def calculate_attribute_markers(corpus):
     for parse_candidate in corpus:
         negative_salience = sc.salience(parse_candidate, attribute="pre")
         positive_salience = sc.salience(parse_candidate, attribute="post")
 
         if max(negative_salience, positive_salience) > r:
-            # print(parse_candidate, negative_salience, positive_salience)
-            print(parse_candidate)
+            print(parse_candidate, negative_salience, positive_salience)
+            # print(parse_candidate)
 
 
 calculate_attribute_markers(corpus1_parse_candidates)

@@ -32,6 +32,7 @@ def unk_corpus(sentences):
         corpus.append(' '.join(line))
     return corpus
 
+
 unked_corpus = unk_corpus(corpus_sentences)
 
 for line in unked_corpus:
