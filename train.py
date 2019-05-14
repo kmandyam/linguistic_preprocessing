@@ -101,6 +101,9 @@ weight_mask = torch.ones(tgt_vocab_size)
 weight_mask[tgt['tok2id']['<pad>']] = 0
 loss_criterion = nn.CrossEntropyLoss(weight=weight_mask)
 if CUDA:
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.cuda.manual_seed_all(config['training']['random_seed'])
     weight_mask = weight_mask.cuda()
     loss_criterion = loss_criterion.cuda()
 

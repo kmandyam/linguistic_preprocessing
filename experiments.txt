@@ -5,3 +5,25 @@ Model   Epochs  Gram-Degree Salience-Threshold  Vocab   train_config    bleu_sco
 delete  70  1   15  original_vocab  orignal_train   20.751574136434648
 delete  70  1   5   original_vocab  original_train  18.332891523617644
 delete  70  4   15  original_vocab  original_train  15.52866380978595   naive-ngram-deletion-ordering
+
+
+Model   Epochs    Attribute-Markers  Salience-Threshold Training-Config BLEU-Score Notes
+delete  70        unigram            5                  original        18.588
+delete  70        ngram              15                 original
+delete  70        parse              15                 original
+
+
+determinism experiments
+Model   Epochs  BLEU                Notes
+delete  10      16.20121400052752   base run
+delete  10      16.144817941129638  base run
+delete  10      16.28132666247409   setting gpu torch seed
+delete  5       9.815311928440725   setting gpu seed and torch.backend seed
+delete  5       9.8372053318697     setting gpu seed and torch.backend seed
+delete  5       10.120196519154465  setting gpu seed and torch.backend seed
+delete  5       10.637703694151067  setting gpu seed and torch.backend seed
+
+
+- try not seeding numpy
+- try the torch.backend stuff
+- if nothing works, have to average

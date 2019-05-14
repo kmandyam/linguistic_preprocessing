@@ -15,3 +15,11 @@ delete attribute markers
       to smallest), periodically delete
     - figure out a way to incorporate scores, enumerate all ngrams, filter out non-markers,
       sort by score and repeatedly remove until we have nothing else left
+
+
+- rewriting the train function
+    - training requires the original data (no need for a parallel corpus because loss is just
+        the train loss, which is calculated in the auto-encoder, we should not read anything into
+        the dev data at all here)
+    - development requires computing the perplexity loss??
+    - testing requires computing the bleu score

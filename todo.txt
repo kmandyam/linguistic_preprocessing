@@ -1,0 +1,9 @@
+- find an alternative scoring system (like a third party scorer)
+- verify that delete retrieve works correctly (we need to start a run)
+- make parse experiment faster
+
+
+- we have a separated version of train, validate and test (in a different repo)
+- in this repo we have all the ngram + parse modifications to the original repo
+- we need to combine the two repos together and at that point we will have a perfectly
+    functioning testing repo to run experiments with
