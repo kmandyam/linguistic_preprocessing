@@ -279,6 +279,8 @@ def get_minibatch(lines, tok2id, index, batch_size, max_len, sort=False, idx=Non
     # and then we concat with the padding token and
     # I think this multiplies the padding token so that everything
     # is padded to the maximum length
+    # this is what the line would be if it was an input line
+    # it starts with the start token
     input_lines = [
         [tok2id.get(w, unk_id) for w in line[:-1]] +
         [tok2id['<pad>']] * (max_len - len(line) + 1)
@@ -287,6 +289,8 @@ def get_minibatch(lines, tok2id, index, batch_size, max_len, sort=False, idx=Non
 
     # for each line in lines, we do the same thing as above
     # except we don't include the <s> token
+    # this is what the line would be if it was an output line
+    # it ends with the close sentence token
     output_lines = [
         [tok2id.get(w, unk_id) for w in line[1:]] +
         [tok2id['<pad>']] * (max_len - len(line) + 1)
