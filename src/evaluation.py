@@ -47,6 +47,7 @@ def get_bleu(hypotheses, reference):
     for hyp, ref in zip(hypotheses, reference):
         stats += np.array(bleu_stats(hyp, ref))
     return 100 * bleu(stats)
+
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
@@ -57,9 +58,8 @@ def get_edit_distance(hypotheses, reference):
 
     return ed * 1.0 / len(hypotheses)
 
-
 def decode_minibatch(max_len, start_id, model, src_input, srclens, srcmask,
-        aux_input, auxlens, auxmask):
+                     aux_input, auxlens, auxmask):
     """ argmax decoding """
     # Initialize target with <s> for every sentence
     tgt_input = Variable(torch.LongTensor(
@@ -73,7 +73,7 @@ def decode_minibatch(max_len, start_id, model, src_input, srclens, srcmask,
     for i in range(max_len):
         # run input through the model
         decoder_logit, word_probs = model(src_input, tgt_input, srcmask, srclens,
-            aux_input, auxmask, auxlens)
+                                          aux_input, auxmask, auxlens)
         decoder_argmax = word_probs.data.cpu().numpy().argmax(axis=-1)
         # select the predicted "next" tokens, attach to target-side inputs
         next_preds = Variable(torch.from_numpy(decoder_argmax[:, -1]))
@@ -95,9 +95,9 @@ def decode_dataset(model, src, tgt, config):
 
         # get batch
         input_content, input_aux, output = data.minibatch(
-            src, tgt, j, 
-            config['data']['batch_size'], 
-            config['data']['max_len'], 
+            src, tgt, j,
+            config['data']['batch_size'],
+            config['data']['max_len'],
             config['model']['model_type'],
             is_test=True)
         input_lines_src, output_lines_src, srclens, srcmask, indices = input_content
@@ -106,7 +106,7 @@ def decode_dataset(model, src, tgt, config):
 
         # TODO -- beam search
         tgt_pred = decode_minibatch(
-            config['data']['max_len'], tgt['tok2id']['<s>'], 
+            config['data']['max_len'], tgt['tok2id']['<s>'],
             model, input_lines_src, srclens, srcmask,
             input_ids_aux, auxlens, auxmask)
 
@@ -118,10 +118,10 @@ def decode_dataset(model, src, tgt, config):
             # convert to toks, cut off at </s>, delete any start tokens (preds were kickstarted w them)
             for line in tok_seqs:
                 toks = [id2tok[x] for x in line]
-                if '<s>' in toks: 
+                if '<s>' in toks:
                     toks.remove('<s>')
                 cut_idx = toks.index('</s>') if '</s>' in toks else len(toks)
-                out.append( toks[:cut_idx] )
+                out.append(toks[:cut_idx])
             # unsort
             out = data.unsort(out, indices)
             return out
@@ -130,16 +130,15 @@ def decode_dataset(model, src, tgt, config):
         inputs += ids_to_toks(output_lines_src, src['id2tok'])
         preds += ids_to_toks(tgt_pred, tgt['id2tok'])
         ground_truths += ids_to_toks(output_lines_tgt, tgt['id2tok'])
-        
+
         if config['model']['model_type'] == 'delete':
-            auxs += [[str(x)] for x in input_ids_aux.data.cpu().numpy()] # because of list comp in inference_metrics()
+            auxs += [[str(x)] for x in input_ids_aux.data.cpu().numpy()]  # because of list comp in inference_metrics()
         elif config['model']['model_type'] == 'delete_retrieve':
             auxs += ids_to_toks(input_ids_aux, tgt['id2tok'])
         elif config['model']['model_type'] == 'seq2seq':
             auxs += ['None' for _ in range(len(tgt_pred))]
 
     return inputs, preds, ground_truths, auxs
-
 
 def inference_metrics(model, src, tgt, config):
     """ decode and evaluate bleu """
@@ -155,7 +154,6 @@ def inference_metrics(model, src, tgt, config):
     auxs = [' '.join(seq) for seq in auxs]
 
     return bleu, edit_distance, inputs, preds, ground_truths, auxs
-
 
 def evaluate_lpp(model, src, tgt, config):
     """ evaluate log perplexity WITHOUT decoding
@@ -176,11 +174,11 @@ def evaluate_lpp(model, src, tgt, config):
 
         # get batch
         input_content, input_aux, output = data.minibatch(
-            src, tgt, j, 
-            config['data']['batch_size'], 
-            config['data']['max_len'], 
-            config['model']['model_type'],
-            is_test=True)
+            src, tgt, j,
+            config['data']['batch_size'],
+            config['data']['max_len'],
+            config['model']['model_type']
+        )
         input_lines_src, _, srclens, srcmask, _ = input_content
         input_ids_aux, _, auxlens, auxmask, _ = input_aux
         input_lines_tgt, output_lines_tgt, _, _, _ = output

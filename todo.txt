@@ -1,4 +1,4 @@
-- find an alternative scoring system (like a third party scorer)
+- find an alternative scoring system (like a third party scorer) DONE, let's use NLTK
 - verify that delete retrieve works correctly (we need to start a run)
 - make parse experiment faster
 
