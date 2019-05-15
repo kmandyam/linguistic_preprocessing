@@ -15,6 +15,8 @@ from src.cuda import CUDA
 import src.data as data
 import src.models as models
 
+outputs_dir = "written_outputs"
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config",
@@ -243,13 +245,13 @@ for epoch in range(start_epoch, config['training']['epochs']):
 bleu_score, edit_distance, inputs, preds, golds, auxs = evaluation.inference_metrics(
     model, src_test, tgt_test, config)
 
-with open(working_dir + '/auxs', 'w') as f:
+with open(working_dir + outputs_dir + '/auxs', 'w') as f:
     f.write('\n'.join(auxs) + '\n')
-with open(working_dir + '/inputs', 'w') as f:
+with open(working_dir + outputs_dir + '/inputs', 'w') as f:
     f.write('\n'.join(inputs) + '\n')
-with open(working_dir + '/preds', 'w') as f:
+with open(working_dir + outputs_dir + '/preds', 'w') as f:
     f.write('\n'.join(preds) + '\n')
-with open(working_dir + '/golds', 'w') as f:
+with open(working_dir + outputs_dir + '/golds', 'w') as f:
     f.write('\n'.join(golds) + '\n')
 
 writer.add_scalar('eval/edit_distance', edit_distance, epoch)
