@@ -1,13 +1,9 @@
-import sys
-
 import json
-import numpy as np
 import logging
 import argparse
 import os
 import time
 import numpy as np
-import glob
 
 import torch
 import torch.nn as nn
@@ -62,7 +58,9 @@ console.setFormatter(formatter)
 logging.getLogger('').addHandler(console)
 
 logging.info('Reading data ...')
+
 # src, tgt, src_test, and tgt_test contains the following information
+# also src_dev and tgt_dev
 # data: all lines in the file
 # content: content for each line
 # attribute: attribute markers for each line
@@ -73,6 +71,14 @@ src, tgt = data.read_nmt_data(
     src=config['data']['src'],
     config=config,
     tgt=config['data']['tgt'],
+    attribute_vocab=config['data']['attribute_vocab']
+)
+
+# adding in a dev dataset because we need something to run log perplexity on
+src_dev, tgt_dev = data.read_nmt_data(
+    src=config['data']['src_dev'],
+    config=config,
+    tgt=config['data']['tgt_dev'],
     attribute_vocab=config['data']['attribute_vocab']
 )
 
@@ -101,6 +107,7 @@ weight_mask = torch.ones(tgt_vocab_size)
 weight_mask[tgt['tok2id']['<pad>']] = 0
 loss_criterion = nn.CrossEntropyLoss(weight=weight_mask)
 if CUDA:
+    # TODO: might need to remove these??
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.cuda.manual_seed_all(config['training']['random_seed'])
@@ -122,9 +129,9 @@ model = models.SeqModel(
 # get information about number of parameters in the model
 # try to load the model from the working directory
 logging.info('MODEL HAS %s params' % model.count_params())
-model, start_epoch = models.attempt_load_model(
-    model=model,
-    checkpoint_dir=working_dir)
+# model, start_epoch = models.attempt_load_model(
+#     model=model,
+#     checkpoint_dir=working_dir)
 if CUDA:
     model = model.cuda()
 
@@ -140,44 +147,39 @@ elif config['training']['optimizer'] == 'sgd':
 else:
     raise NotImplementedError("Learning method not recommend for task")
 
+def evaluate_dev(model, src_dev, tgt_dev, config):
+    model.eval()
+    dev_loss = evaluation.evaluate_lpp(
+        model, src_dev, tgt_dev, config)
+    model.train()
+    return dev_loss
+
 epoch_loss = []
 start_since_last_report = time.time()
 words_since_last_report = 0
 losses_since_last_report = []
 best_metric = 0.0
 best_epoch = 0
-cur_metric = 0.0  # log perplexity or BLEU
+cur_metric = 0.0  # log perplexity
 num_batches = len(src['content']) / batch_size
 
+# training the model
 STEP = 0
+start_epoch = 0
+
 # run for how many ever epochs based on whether we were able to
 # load model from a checkpoint
 for epoch in range(start_epoch, config['training']['epochs']):
-    # we checkpoint based on the best metric (which is either log perplexity or BLEU)
-    if cur_metric > best_metric:
-        # rm old checkpoint
-        for ckpt_path in glob.glob(working_dir + '/model.*'):
-            os.system("rm %s" % ckpt_path)
-        # replace with new checkpoint
-        torch.save(model.state_dict(), working_dir + '/model.%s.ckpt' % epoch)
-
-        best_metric = cur_metric
-        best_epoch = epoch - 1
-
     losses = []
     # we loop through each of the training examples (just the content though)
     for i in range(0, len(src['content']), batch_size):
-        # TODO: not sure what the overfit functionality is supposed to do
-        # we haven't currently set this though
-        if args.overfit:
-            i = 50
-
         batch_idx = i / batch_size
 
         # get a mini batch with input, attribute and output
         # this allows us to use the model
         input_content, input_aux, output = data.minibatch(
             src, tgt, i, batch_size, max_length, config['model']['model_type'])
+
         input_lines_src, _, srclens, srcmask, _ = input_content
         input_ids_aux, _, auxlens, auxmask, _ = input_aux
         input_lines_tgt, output_lines_tgt, _, _, _ = output
@@ -192,9 +194,10 @@ for epoch in range(start_epoch, config['training']['epochs']):
             decoder_logit.contiguous().view(-1, tgt_vocab_size),
             output_lines_tgt.view(-1)
         )
-        losses.append(loss.data.item())
-        losses_since_last_report.append(loss.data.item())
-        epoch_loss.append(loss.data.item())
+
+        losses.append(loss.item())
+        losses_since_last_report.append(loss.item())
+        epoch_loss.append(loss.item())
         loss.backward()
         norm = nn.utils.clip_grad_norm_(model.parameters(), config['training']['max_norm'])
 
@@ -202,57 +205,56 @@ for epoch in range(start_epoch, config['training']['epochs']):
 
         optimizer.step()
 
-        # TODO: not sure what the args.overfit parameter does
-        if args.overfit or batch_idx % config['training']['batches_per_report'] == 0:
+        # this section of code just allows us to print some statistics to the console
+        # every couple of iterations
+        if batch_idx % config['training']['batches_per_report'] == 0:
             s = float(time.time() - start_since_last_report)
             wps = (batch_size * config['training']['batches_per_report']) / s
             avg_loss = np.mean(losses_since_last_report)
             info = (epoch, batch_idx, num_batches, wps, avg_loss, cur_metric)
             writer.add_scalar('stats/WPS', wps, STEP)
             writer.add_scalar('stats/loss', avg_loss, STEP)
-            logging.info('EPOCH: %s ITER: %s/%s WPS: %.2f LOSS: %.4f METRIC: %.4f' % info)
+            logging.info('EPOCH: %s ITER: %s/%s WPS: %.2f TRAIN LOSS: %.4f DEV LOSS: %.4f' % info)
             start_since_last_report = time.time()
             words_since_last_report = 0
             losses_since_last_report = []
 
         # NO SAMPLING!! because weird train-vs-test data stuff would be a pain
         STEP += 1
-    if args.overfit:
-        continue
 
     logging.info('EPOCH %s COMPLETE. EVALUATING...' % epoch)
     start = time.time()
-    model.eval()
-    dev_loss = evaluation.evaluate_lpp(
-        model, src_test, tgt_test, config)
+
+    # we calculate loss the same way on the evaluation data
+    dev_loss = evaluate_dev(model, src_dev, tgt_dev, config)
+    cur_metric = dev_loss
 
     writer.add_scalar('eval/loss', dev_loss, epoch)
 
-    if args.bleu and epoch >= config['training'].get('bleu_start_epoch', 1):
-        cur_metric, edit_distance, inputs, preds, golds, auxs = evaluation.inference_metrics(
-            model, src_test, tgt_test, config)
-
-        with open(working_dir + '/auxs.%s' % epoch, 'w') as f:
-            f.write('\n'.join(auxs) + '\n')
-        with open(working_dir + '/inputs.%s' % epoch, 'w') as f:
-            f.write('\n'.join(inputs) + '\n')
-        with open(working_dir + '/preds.%s' % epoch, 'w') as f:
-            f.write('\n'.join(preds) + '\n')
-        with open(working_dir + '/golds.%s' % epoch, 'w') as f:
-            f.write('\n'.join(golds) + '\n')
-
-        writer.add_scalar('eval/edit_distance', edit_distance, epoch)
-        writer.add_scalar('eval/bleu', cur_metric, epoch)
-
-    else:
-        cur_metric = dev_loss
-
-    model.train()
-
-    logging.info('METRIC: %s. TIME: %.2fs CHECKPOINTING...' % (
+    # write the current checkpoint
+    logging.info('NEW DEV LOSS: %s. TIME: %.2fs CHECKPOINTING...' % (
         cur_metric, (time.time() - start)))
+    torch.save(model.state_dict(), working_dir + '/model.%s.ckpt' % epoch)
+
     avg_loss = np.mean(epoch_loss)
     epoch_loss = []
 
+# let's test the model now
+bleu_score, edit_distance, inputs, preds, golds, auxs = evaluation.inference_metrics(
+    model, src_test, tgt_test, config)
+
+with open(working_dir + '/auxs', 'w') as f:
+    f.write('\n'.join(auxs) + '\n')
+with open(working_dir + '/inputs', 'w') as f:
+    f.write('\n'.join(inputs) + '\n')
+with open(working_dir + '/preds', 'w') as f:
+    f.write('\n'.join(preds) + '\n')
+with open(working_dir + '/golds', 'w') as f:
+    f.write('\n'.join(golds) + '\n')
+
+writer.add_scalar('eval/edit_distance', edit_distance, epoch)
+writer.add_scalar('eval/bleu', bleu_score, epoch)
+
 writer.close()
 
+logging.info('BLEU SCORE ON REFERENCE DATA: %s.' % (bleu_score))
