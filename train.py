@@ -15,7 +15,7 @@ from src.cuda import CUDA
 import src.data as data
 import src.models as models
 
-outputs_dir = "written_outputs"
+outputs_dir = "/written_outputs"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -40,6 +40,9 @@ working_dir = config['data']['working_dir']
 
 if not os.path.exists(working_dir):
     os.makedirs(working_dir)
+
+if not os.path.exists(working_dir + outputs_dir):
+    os.makedirs(working_dir + outputs_dir)
 
 config_path = os.path.join(working_dir, 'config.json')
 if not os.path.exists(config_path):
