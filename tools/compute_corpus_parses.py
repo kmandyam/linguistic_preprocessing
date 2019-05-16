@@ -12,6 +12,8 @@ in a corpus given the vocab
 
 import sys
 from parse import parse_sentence, retrieve_spans
+import pickle
+import os
 
 vocab = set([w.strip() for i, w in enumerate(open(sys.argv[1]))])
 
@@ -20,6 +22,7 @@ corpus_sentences = [
     for l in open(sys.argv[2])
 ]
 
+corpus_path, corpus_file = os.path.split(sys.argv[2])
 
 def unk_corpus(sentences):
     corpus = []
@@ -35,8 +38,19 @@ def unk_corpus(sentences):
 
 unked_corpus = unk_corpus(corpus_sentences)
 
-for line in unked_corpus:
+# what i really want is a dictionary from sentences to spans
+# saved in a file that i can read
+# this dictionary is a map from the original sentence in the corpus
+# to the list of spans produced by parsing the unked sentence
+span_dict = {}
+for i, line in enumerate(unked_corpus):
     parse = parse_sentence(line)
     spans = retrieve_spans(parse)
-    for span in spans:
-        print(span)
+    original_sentence = ' '.join(corpus_sentences[i])
+    span_dict[original_sentence] = spans
+
+pickle_dest = "../span_candidates/" + corpus_file + ".spans.p"
+pickle.dump(span_dict, open(pickle_dest, "wb"))
+saved_dict = pickle.load(open(pickle_dest, "rb"))
+
+assert(span_dict == saved_dict)
