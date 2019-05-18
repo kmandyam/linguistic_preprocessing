@@ -14,6 +14,7 @@ import sys
 from parse import parse_sentence, retrieve_spans
 import pickle
 import os
+from tqdm import tqdm
 
 vocab = set([w.strip() for i, w in enumerate(open(sys.argv[1]))])
 
@@ -43,14 +44,19 @@ unked_corpus = unk_corpus(corpus_sentences)
 # this dictionary is a map from the original sentence in the corpus
 # to the list of spans produced by parsing the unked sentence
 span_dict = {}
-for i, line in enumerate(unked_corpus):
+for i, line in tqdm(enumerate(unked_corpus)):
     parse = parse_sentence(line)
     spans = retrieve_spans(parse)
     original_sentence = ' '.join(corpus_sentences[i])
-    span_dict[original_sentence] = spans
+    print(original_sentence)
+    for span in spans:
+        print(span, end=", ")
+        # print(span + ", ")
+    print()
+    # span_dict[original_sentence] = spans
 
-pickle_dest = "../span_candidates/" + corpus_file + ".spans.p"
-pickle.dump(span_dict, open(pickle_dest, "wb"))
-saved_dict = pickle.load(open(pickle_dest, "rb"))
+# pickle_dest = "../span_candidates/" + corpus_file + ".spans.p"
+# pickle.dump(span_dict, open(pickle_dest, "wb"))
+# saved_dict = pickle.load(open(pickle_dest, "rb"))
 
-assert(span_dict == saved_dict)
+# assert(span_dict == saved_dict)
