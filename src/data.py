@@ -119,6 +119,7 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
         # we want to generate a parse and get all the candidates for the sentence
         # look this up in the parse dict for greater speed
         if ' '.join(line) not in parse_dict:
+            import pdb; pdb.set_trace()
             parse = parse_sentence(' '.join(line))
             spans = retrieve_spans(parse)
         else:

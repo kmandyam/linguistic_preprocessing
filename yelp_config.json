@@ -19,8 +19,8 @@
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
     "attribute_vocab": "attribute_markers/parse.15.new",
-    "negative_parses": "span_candidates/candidates.negative",
-    "positive_parses": "span_candidates/candidates.positive",
+    "negative_parses": "span_candidates/candidates.negative.all",
+    "positive_parses": "span_candidates/candidates.positive.all",
     "batch_size": 64,
     "max_len": 50,
     "working_dir": "working_dir"

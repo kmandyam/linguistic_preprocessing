@@ -79,6 +79,7 @@ src, tgt = data.read_nmt_data(
     attribute_vocab=config['data']['attribute_vocab']
 )
 
+logging.info('Finished reading train data ...')
 # adding in a dev dataset because we need something to run log perplexity on
 src_dev, tgt_dev = data.read_nmt_data(
     src=config['data']['src_dev'],
@@ -87,6 +88,7 @@ src_dev, tgt_dev = data.read_nmt_data(
     attribute_vocab=config['data']['attribute_vocab']
 )
 
+logging.info('Finished reading dev data ...')
 # src_test and tgt_test are different from above
 # in that they configure the CorpusSearcher to look for target attributes.
 # note that the last two named variables are set
@@ -98,7 +100,7 @@ src_test, tgt_test = data.read_nmt_data(
     train_src=src,
     train_tgt=tgt
 )
-logging.info('...done!')
+logging.info('...done reading all data!')
 
 # set some basic variables
 batch_size = config['data']['batch_size']
