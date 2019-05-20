@@ -76,7 +76,7 @@ def build_vocab_maps(vocab_file):
 
     return tok_to_id, id_to_tok
 
-def extract_attribute_markers(line, attribute_vocab, method="unigram"):
+def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram"):
     assert method in ["unigram", "ngram", "parse"]
 
     if method == "unigram":
@@ -116,10 +116,9 @@ def extract_attribute_markers(line, attribute_vocab, method="unigram"):
                 content = content.replace(marker, "")
         return line, content.split(), deleted_markers
     elif method == "parse":
-        # TODO: this function is super slow right now, pre-process the parses in a better way
         # we want to generate a parse and get all the candidates for the sentence
-        parse = parse_sentence(' '.join(line))
-        spans = retrieve_spans(parse)
+        # look this up in the parse dict for greater speed
+        spans = parse_dict[' '.join(line)]
 
         attribute_markers = [
             (span, attribute_vocab[span]) for span in spans if span in attribute_vocab
@@ -138,11 +137,11 @@ def extract_attribute_markers(line, attribute_vocab, method="unigram"):
         return line, content.split(), deleted_markers
 
 
-def extract_attributes(line, pre_attr, post_attr, attribute="pre"):
+def extract_attributes(line, pre_attr, post_attr, parse_dict, attribute="pre"):
     # how to retrieve attribute markers and content
     # we currently have three methods of doing this, described above
     attribute_vocab = pre_attr if attribute == "pre" else post_attr
-    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, method="unigram")
+    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method="parse")
     return line, content, attribute_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
@@ -160,13 +159,34 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
             pre_attr[attr] = pre_salience
             post_attr[attr] = post_salience
 
+    # construct maps of pre-processed parses
+    def retrieve_parses(precomputed_parse_file):
+        parse_dict = {}
+        i = 0
+        original_sentence = ""
+        for line in open(precomputed_parse_file):
+            if i % 2 != 0:
+                # we're at a list of parses
+                parses = line.rstrip('\n').split(", ")
+                parses = parses[:-1]
+                parses = [parse for parse in parses if parse]
+                parse_dict[original_sentence] = parses
+            else:
+                original_sentence = line.strip()
+            i += 1
+
+        return parse_dict
+
+    pre_dict = retrieve_parses(config["negative_parses"])
+    post_dict = retrieve_parses(config["positive_parses"])
+
     # get all the lines in the source file (positive)
     src_lines = [l.strip().split() for l in open(src, 'r')]
 
     # retrieve the original sentence, content, and attribute markers for
     # each line in the source file
     src_lines, src_content, src_attribute = list(zip(
-        *[extract_attributes(line, pre_attr, post_attr, attribute="pre") for line in src_lines]
+        *[extract_attributes(line, pre_attr, post_attr, pre_dict, attribute="pre") for line in src_lines]
     ))
 
     # creating two maps, token to id and id to token for the source vocab (which is the full vocab)
@@ -195,7 +215,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # we get the lines, content, and attributes in the same way as above
     tgt_lines = [l.strip().split() for l in open(tgt, 'r')] if tgt else None
     tgt_lines, tgt_content, tgt_attribute = list(zip(
-        *[extract_attributes(line, pre_attr, post_attr, attribute="post") for line in tgt_lines]
+        *[extract_attributes(line, pre_attr, post_attr, post_dict, attribute="post") for line in tgt_lines]
     ))
 
     # build the vocab maps again as above
