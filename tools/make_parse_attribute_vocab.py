@@ -14,7 +14,7 @@ to calculate the attribute markers, we iterate through span candidates
 import sys
 from sklearn.feature_extraction.text import CountVectorizer
 import numpy as np
-import pickle
+from tqdm import tqdm
 
 class ParseSalienceCalculator(object):
     def __init__(self, pre_corpus, post_corpus, tokenize):
@@ -59,6 +59,7 @@ def read_corpus_parses(filename):
             # we're at a list of parses
             parses = line.rstrip('\n').split(", ")
             parses = parses[:-1]
+            parses = [parse for parse in parses if parse]
             corpus_parses.extend(parses)
         i += 1
 
@@ -80,7 +81,7 @@ sc = ParseSalienceCalculator(corpus1_parses, corpus2_parses, tokenize)
 
 print("marker", "negative_salience", "positive_salience")
 def calculate_attribute_markers(corpus):
-    for parse_candidate in corpus:
+    for parse_candidate in tqdm(corpus):
         negative_salience = sc.salience(parse_candidate, attribute="pre")
         positive_salience = sc.salience(parse_candidate, attribute="post")
 
