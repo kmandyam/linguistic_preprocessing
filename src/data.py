@@ -118,7 +118,11 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
     elif method == "parse":
         # we want to generate a parse and get all the candidates for the sentence
         # look this up in the parse dict for greater speed
-        spans = parse_dict[' '.join(line)]
+        if ' '.join(line) not in parse_dict:
+            parse = parse_sentence(' '.join(line))
+            spans = retrieve_spans(parse)
+        else:
+            spans = parse_dict[' '.join(line)]
 
         attribute_markers = [
             (span, attribute_vocab[span]) for span in spans if span in attribute_vocab
@@ -177,8 +181,8 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
 
         return parse_dict
 
-    pre_dict = retrieve_parses(config["negative_parses"])
-    post_dict = retrieve_parses(config["positive_parses"])
+    pre_dict = retrieve_parses(config["data"]["negative_parses"])
+    post_dict = retrieve_parses(config["data"]["positive_parses"])
 
     # get all the lines in the source file (positive)
     src_lines = [l.strip().split() for l in open(src, 'r')]
