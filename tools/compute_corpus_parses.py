@@ -51,12 +51,4 @@ for i, line in tqdm(enumerate(unked_corpus)):
     print(original_sentence)
     for span in spans:
         print(span, end=", ")
-        # print(span + ", ")
     print()
-    # span_dict[original_sentence] = spans
-
-# pickle_dest = "../span_candidates/" + corpus_file + ".spans.p"
-# pickle.dump(span_dict, open(pickle_dest, "wb"))
-# saved_dict = pickle.load(open(pickle_dest, "rb"))
-
-# assert(span_dict == saved_dict)
