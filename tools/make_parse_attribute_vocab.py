@@ -1,5 +1,5 @@
 """
-python make_ngram_attribute_vocab.py [corpus1 pickle] [corpus2 pickle] r
+python make_ngram_attribute_vocab.py [corpus1 parses] [corpus2 parses] r
 
 subsets a file by finding the words most associated with
 one of two corpuses. threshold is r ( # in corpus_a  / # in corpus_b )
@@ -50,28 +50,33 @@ class ParseSalienceCalculator(object):
             return (post_count + lmbda) / (pre_count + lmbda)
 
 
-corpus1_parse_map = pickle.load(open(sys.argv[1], "rb"))
-corpus2_parse_map = pickle.load(open(sys.argv[2], "rb"))
+def read_corpus_parses(filename):
+    corpus_parses = []
+
+    i = 0
+    for line in open(filename):
+        if i % 2 != 0:
+            # we're at a list of parses
+            parses = line.rstrip('\n').split(", ")
+            parses = parses[:-1]
+            corpus_parses.extend(parses)
+        i += 1
+
+    return corpus_parses
+
+
+corpus1_parses = read_corpus_parses(sys.argv[1])
+corpus2_parses = read_corpus_parses(sys.argv[2])
 
 def tokenize(text):
     return [text]
 
-def get_corpus(parse_map):
-    corpus = []
-    for key in parse_map:
-        spans = parse_map[key]
-        corpus.extend(spans)
-    return corpus
-
-
-corpus1_parse_candidates = get_corpus(corpus1_parse_map)
-corpus2_parse_candidates = get_corpus(corpus2_parse_map)
 
 # the salience
 #  ratio
 r = float(sys.argv[3])
 
-sc = ParseSalienceCalculator(corpus1_parse_candidates, corpus2_parse_candidates, tokenize)
+sc = ParseSalienceCalculator(corpus1_parses, corpus2_parses, tokenize)
 
 print("marker", "negative_salience", "positive_salience")
 def calculate_attribute_markers(corpus):
@@ -83,5 +88,5 @@ def calculate_attribute_markers(corpus):
             print(parse_candidate, negative_salience, positive_salience)
 
 
-calculate_attribute_markers(corpus1_parse_candidates)
-calculate_attribute_markers(corpus2_parse_candidates)
+calculate_attribute_markers(corpus1_parses)
+calculate_attribute_markers(corpus2_parses)
