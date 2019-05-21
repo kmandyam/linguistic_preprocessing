@@ -1,0 +1,4 @@
+deletion_method epochs  bleu_score  notes
+
+parse   70  0.4438534446890862  using parse.15.new
+unigram 70  0.47882872950938876 using unigram.5
