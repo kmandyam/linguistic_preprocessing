@@ -4,18 +4,17 @@ import sys
 from nltk.translate.bleu_score import sentence_bleu
 from nltk.translate.bleu_score import corpus_bleu
 
-preds = open(sys.argv[1])
-human = open(sys.argv[2])
+preds = open(sys.argv[1]) # the preds output from delete, retrieve, generate
+human = open(sys.argv[2]) # the human output
 
 references = []
 hypotheses = []
 
+for line in preds:
+    hypotheses.append(line.strip())
+
 for line in human:
     references.append([line.strip().split("\t")[1]])
-
-for line in preds:
-    hypotheses.append(line.strip().split("\t")[1])
-
 
 
 # hypothesis = ['It', 'is', 'a', 'cat', 'at', 'room']

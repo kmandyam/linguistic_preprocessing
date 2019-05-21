@@ -253,7 +253,7 @@ with open(working_dir + outputs_dir + '/auxs', 'w') as f:
     f.write('\n'.join(auxs) + '\n')
 with open(working_dir + outputs_dir + '/inputs', 'w') as f:
     f.write('\n'.join(inputs) + '\n')
-with open(working_dir + outputs_dir + '/preds', 'w') as f:
+with open(working_dir + outputs_dir + '/preds.parse.delete.70', 'w') as f:
     f.write('\n'.join(preds) + '\n')
 with open(working_dir + outputs_dir + '/golds', 'w') as f:
     f.write('\n'.join(golds) + '\n')

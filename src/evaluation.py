@@ -115,7 +115,7 @@ def decode_dataset(model, src, tgt, config):
             out = []
             # take off the gpu
             tok_seqs = tok_seqs.cpu().numpy()
-            # convert to toks, cut off at </s>, delete any start tokens (preds were kickstarted w them)
+            # convert to toks, cut off at </s>, delete any start tokens (preds.parse.delete.70 were kickstarted w them)
             for line in tok_seqs:
                 toks = [id2tok[x] for x in line]
                 if '<s>' in toks:
@@ -126,7 +126,7 @@ def decode_dataset(model, src, tgt, config):
             out = data.unsort(out, indices)
             return out
 
-        # convert inputs/preds/targets/aux to human-readable form
+        # convert inputs/preds.parse.delete.70/targets/aux to human-readable form
         inputs += ids_to_toks(output_lines_src, src['id2tok'])
         preds += ids_to_toks(tgt_pred, tgt['id2tok'])
         ground_truths += ids_to_toks(output_lines_tgt, tgt['id2tok'])
