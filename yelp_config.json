@@ -27,6 +27,7 @@
   },
     "model": {
         "model_type": "delete",
+        "deletion_method": "parse",
         "emb_dim": 128,
         "attention": false,
         "encoder": "lstm",

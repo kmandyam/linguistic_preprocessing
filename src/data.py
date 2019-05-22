@@ -142,11 +142,11 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
         return line, content.split(), deleted_markers
 
 
-def extract_attributes(line, pre_attr, post_attr, parse_dict, attribute="pre"):
+def extract_attributes(line, pre_attr, post_attr, parse_dict, config, attribute="pre"):
     # how to retrieve attribute markers and content
     # we currently have three methods of doing this, described above
     attribute_vocab = pre_attr if attribute == "pre" else post_attr
-    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method="parse")
+    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method=config["model"]["deletion_method"])
     return line, content, attribute_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
@@ -191,7 +191,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # retrieve the original sentence, content, and attribute markers for
     # each line in the source file
     src_lines, src_content, src_attribute = list(zip(
-        *[extract_attributes(line, pre_attr, post_attr, pre_dict, attribute="pre") for line in src_lines]
+        *[extract_attributes(line, pre_attr, post_attr, pre_dict, config, attribute="pre") for line in src_lines]
     ))
 
     # creating two maps, token to id and id to token for the source vocab (which is the full vocab)
