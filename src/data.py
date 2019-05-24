@@ -29,7 +29,6 @@ class CorpusSearcher(object):
         # at train time, this is the denoising thing, because we choose
         # attributes that are close to the attribute in question based on
         # word edit distance
-        # TODO: we want to verify that this works as expected
         query = self.query_corpus[key_idx]
 
         query_vec = self.vectorizer.transform([query])
