@@ -26,7 +26,7 @@
     "working_dir": "working_dir"
   },
     "model": {
-        "model_type": "delete",
+        "model_type": "delete_retrieve",
         "deletion_method": "parse",
         "emb_dim": 128,
         "attention": false,

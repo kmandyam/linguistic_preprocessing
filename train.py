@@ -17,6 +17,8 @@ import src.models as models
 
 outputs_dir = "/written_outputs"
 
+intermediate_outputs_dir = "data/intermediate_outputs/delete.outputs.parse"
+
 parser = argparse.ArgumentParser()
 parser.add_argument(
     "--config",
@@ -89,6 +91,7 @@ src_dev, tgt_dev = data.read_nmt_data(
 )
 
 logging.info('Finished reading dev data ...')
+
 # src_test and tgt_test are different from above
 # in that they configure the CorpusSearcher to look for target attributes.
 # note that the last two named variables are set
@@ -101,6 +104,17 @@ src_test, tgt_test = data.read_nmt_data(
     train_tgt=tgt
 )
 logging.info('...done reading all data!')
+
+output_file = open(intermediate_outputs_dir, "w")
+data_len = len(src_test['data'])
+for i in range(data_len):
+    sentence = ' '.join(src_test['data'][i])
+    content = ' '.join(src_test['content'][i])
+    attribute = ', '.join(src_test['attribute'][i])
+    candidates = ', '.join(src_test['attribute_candidates'][i])
+    output_file.write(sentence + " ::: " + content + " ::: " + candidates + " ::: " + attribute + "\n")
+
+logging.info('Finished writing delete outputs')
 
 # set some basic variables
 batch_size = config['data']['batch_size']

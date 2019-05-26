@@ -87,7 +87,7 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
                 attribute.append(tok)
             else:
                 content.append(tok)
-        return line, content, attribute
+        return line, content, attribute, attribute
     elif method == "ngram":
         # generate all ngrams for the sentence
         grams = []
@@ -107,13 +107,14 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
         content = " ".join(line)
         attribute_markers.sort(key=lambda x: x[1], reverse=True)
 
+        candidate_markers = [marker for (marker, score) in attribute_markers]
         # delete based on highest score first
         deleted_markers = []
         for marker, score in attribute_markers:
             if marker in content:
                 deleted_markers.append(marker)
                 content = content.replace(marker, "")
-        return line, content.split(), deleted_markers
+        return line, content.split(), deleted_markers, candidate_markers
     elif method == "parse":
         # we want to generate a parse and get all the candidates for the sentence
         # look this up in the parse dict for greater speed
@@ -132,21 +133,22 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
         content = " ".join(line)
         attribute_markers.sort(key=lambda x: x[1], reverse=True)
 
+        candidate_markers = [marker for (marker, score) in attribute_markers]
         # delete based on highest score first
         deleted_markers = []
         for marker, score in attribute_markers:
             if marker in content:
                 deleted_markers.append(marker)
                 content = content.replace(marker, "")
-        return line, content.split(), deleted_markers
+        return line, content.split(), deleted_markers, candidate_markers
 
 
 def extract_attributes(line, pre_attr, post_attr, parse_dict, config, attribute="pre"):
     # how to retrieve attribute markers and content
     # we currently have three methods of doing this, described above
     attribute_vocab = pre_attr if attribute == "pre" else post_attr
-    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method=config["model"]["deletion_method"])
-    return line, content, attribute_markers
+    line, content, attribute_markers, candidates = extract_attribute_markers(line, attribute_vocab, parse_dict, method=config["model"]["deletion_method"])
+    return line, content, attribute_markers, candidates
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):
     # get all the words in the attribute vocabulary
@@ -189,7 +191,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
 
     # retrieve the original sentence, content, and attribute markers for
     # each line in the source file
-    src_lines, src_content, src_attribute = list(zip(
+    src_lines, src_content, src_attribute, src_candidates = list(zip(
         *[extract_attributes(line, pre_attr, post_attr, pre_dict, config, attribute="pre") for line in src_lines]
     ))
 
@@ -212,14 +214,15 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # we create a Corpus Searcher for the source file
     src = {
         'data': src_lines, 'content': src_content, 'attribute': src_attribute,
-        'tok2id': src_tok2id, 'id2tok': src_id2tok, 'dist_measurer': src_dist_measurer
+        'tok2id': src_tok2id, 'id2tok': src_id2tok, 'dist_measurer': src_dist_measurer,
+        'attribute_candidates': src_candidates
     }
 
     # get all the lines in the target file and if it exists
     # we get the lines, content, and attributes in the same way as above
     tgt_lines = [l.strip().split() for l in open(tgt, 'r')] if tgt else None
-    tgt_lines, tgt_content, tgt_attribute = list(zip(
-        *[extract_attributes(line, pre_attr, post_attr, post_dict, attribute="post") for line in tgt_lines]
+    tgt_lines, tgt_content, tgt_attribute, tgt_candidates = list(zip(
+        *[extract_attributes(line, pre_attr, post_attr, post_dict, config, attribute="post") for line in tgt_lines]
     ))
 
     # build the vocab maps again as above
@@ -244,7 +247,8 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
         )
     tgt = {
         'data': tgt_lines, 'content': tgt_content, 'attribute': tgt_attribute,
-        'tok2id': tgt_tok2id, 'id2tok': tgt_id2tok, 'dist_measurer': tgt_dist_measurer
+        'tok2id': tgt_tok2id, 'id2tok': tgt_id2tok, 'dist_measurer': tgt_dist_measurer,
+        'attribute_candidates': tgt_candidates
     }
 
     return src, tgt
