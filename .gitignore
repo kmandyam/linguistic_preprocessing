@@ -103,4 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# saved model checkpoints
 working_dir/*
+delete_retrieve_working_dirs/*
+delete_working_dirs/*
+determinism/*

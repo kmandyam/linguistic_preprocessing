@@ -119,7 +119,6 @@ def extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram
         # we want to generate a parse and get all the candidates for the sentence
         # look this up in the parse dict for greater speed
         if ' '.join(line) not in parse_dict:
-            import pdb; pdb.set_trace()
             parse = parse_sentence(' '.join(line))
             spans = retrieve_spans(parse)
         else:
@@ -146,7 +145,7 @@ def extract_attributes(line, pre_attr, post_attr, parse_dict, attribute="pre"):
     # how to retrieve attribute markers and content
     # we currently have three methods of doing this, described above
     attribute_vocab = pre_attr if attribute == "pre" else post_attr
-    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method="parse")
+    line, content, attribute_markers = extract_attribute_markers(line, attribute_vocab, parse_dict, method="unigram")
     return line, content, attribute_markers
 
 def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=None):

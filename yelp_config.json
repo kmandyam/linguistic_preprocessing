@@ -3,7 +3,7 @@
     "optimizer": "adam",
     "learning_rate": 0.0003,
     "max_norm": 3.0,
-    "epochs": 1,
+    "epochs": 30,
     "batches_per_report": 200,
     "batches_per_sampling": 500,
     "random_seed": 1
@@ -18,15 +18,15 @@
     "src_vocab": "data/yelp/vocab",
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
-    "attribute_vocab": "attribute_markers/parse.15.new",
+    "attribute_vocab": "attribute_markers/unigram.5",
     "negative_parses": "span_candidates/candidates.negative.all",
     "positive_parses": "span_candidates/candidates.positive.all",
-    "batch_size": 64,
+    "batch_size": 256,
     "max_len": 50,
-    "working_dir": "working_dir"
+    "working_dir": "delete_retrieve_working_dirs/unigram_delete_retrieve_working_dir"
   },
     "model": {
-        "model_type": "delete",
+        "model_type": "delete_retrieve",
         "emb_dim": 128,
         "attention": false,
         "encoder": "lstm",
