@@ -236,9 +236,11 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
             make_binary=True
         )
     # at test time, scan through train content (using tfidf) and retrieve corresponding attributes
+    # at test time we want to look through the tgt train corpus for content that matches the
+    # src content and then we retrieve the tgt attribute from that
     else:
         tgt_dist_measurer = CorpusSearcher(
-            query_corpus=[' '.join(x) for x in train_src['content']],
+            query_corpus=[' '.join(x) for x in src['content']],
             key_corpus=[' '.join(x) for x in train_tgt['content']],
             value_corpus=[' '.join(x) for x in train_tgt['attribute']],
             vectorizer=TfidfVectorizer(vocabulary=tgt_tok2id),
@@ -261,6 +263,9 @@ def sample_replace(lines, dist_measurer, sample_rate, corpus_idx):
     out = [None for _ in range(len(lines))]
     for i, line in enumerate(lines):
         if random.random() < sample_rate:
+            # during train time, we're looking for attributes that are similar to ours
+            # during test time, we're looking for attributes in the target corpus with
+            # content similar to the one we currently have
             sims = dist_measurer.most_similar(corpus_idx + i)[1:]  # top match is the current line
             try:
                 line = next((
@@ -384,13 +389,16 @@ def minibatch(src, tgt, idx, batch_size, max_len, model_type, is_test=False):
         attributes = (attribute_ids, None, None, None, None)
 
     elif model_type == 'delete_retrieve':
-        # get the minibatch for all content in the source file
+        # get the minibatch for all content in the in dataset (which could be src or tgt)
+        # recall, the content has the attribute markers deleted, the inputs will just be
+        # encoded versions of this content (as tensors)
         inputs = get_minibatch(
             in_dataset['content'], in_dataset['tok2id'], idx, batch_size, max_len, sort=True)
         # get the minibatch for all content in the target attribute (but perturb some of the attributes)
+        # during train time, these attributes are all going to be similar to the original ones
         attributes = get_minibatch(
             out_dataset['attribute'], out_dataset['tok2id'], idx, batch_size, max_len, idx=inputs[-1],
-            dist_measurer=out_dataset['dist_measurer'], sample_rate=0.0 if is_test else 0.25)
+            dist_measurer=out_dataset['dist_measurer'], sample_rate=1.0 if is_test else 0.25)
         # basically get the targets, this is the out_datset's data key which are all the
         # original lines
         outputs = get_minibatch(

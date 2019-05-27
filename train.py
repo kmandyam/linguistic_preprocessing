@@ -17,7 +17,7 @@ import src.models as models
 
 outputs_dir = "/written_outputs"
 
-intermediate_outputs_dir = "data/intermediate_outputs/delete.outputs.parse"
+intermediate_outputs_dir = "data/intermediate_outputs/delete.outputs.unigram"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -267,7 +267,7 @@ with open(working_dir + outputs_dir + '/auxs', 'w') as f:
     f.write('\n'.join(auxs) + '\n')
 with open(working_dir + outputs_dir + '/inputs', 'w') as f:
     f.write('\n'.join(inputs) + '\n')
-with open(working_dir + outputs_dir + '/preds.parse.delete.70', 'w') as f:
+with open(working_dir + outputs_dir + '/preds', 'w') as f:
     f.write('\n'.join(preds) + '\n')
 with open(working_dir + outputs_dir + '/golds', 'w') as f:
     f.write('\n'.join(golds) + '\n')
