@@ -18,7 +18,7 @@
     "src_vocab": "data/yelp/vocab",
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
-    "attribute_vocab": "attribute_markers/unigram.5",
+    "attribute_vocab": "attribute_markers/parse.15.new",
     "negative_parses": "span_candidates/candidates.negative.all",
     "positive_parses": "span_candidates/candidates.positive.all",
     "batch_size": 256,
@@ -27,7 +27,7 @@
   },
     "model": {
         "model_type": "delete_retrieve",
-        "deletion_method": "unigram",
+        "deletion_method": "parse",
         "emb_dim": 128,
         "attention": false,
         "encoder": "lstm",

@@ -23,3 +23,7 @@ delete attribute markers
         the dev data at all here)
     - development requires computing the perplexity loss??
     - testing requires computing the bleu score
+
+- format for output files:
+    - delete: original sentence, content, marker candidates, chosen attribute markers
+    - retrieve:

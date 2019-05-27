@@ -17,7 +17,7 @@ import src.models as models
 
 outputs_dir = "/written_outputs"
 
-intermediate_outputs_dir = "data/intermediate_outputs/delete.outputs.unigram"
+intermediate_outputs_dir = "data/intermediate_outputs/delete.outputs.parse"
 
 parser = argparse.ArgumentParser()
 parser.add_argument(

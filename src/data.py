@@ -11,6 +11,9 @@ from src.cuda import CUDA
 from nltk import ngrams
 from tools.parse import parse_sentence, retrieve_spans
 
+retrieve_output_file = "data/intermediate_outputs/retrieve.outputs.parse"
+output_file = open(retrieve_output_file, "w")
+
 class CorpusSearcher(object):
     def __init__(self, query_corpus, key_corpus, value_corpus, vectorizer, make_binary=True):
         self.vectorizer = vectorizer
@@ -41,7 +44,7 @@ class CorpusSearcher(object):
         # use the retrieved i to pick examples from the VALUE corpus
         selected = [
             # (self.query_corpus[i], self.key_corpus[i], self.value_corpus[i], i, score) # useful for debugging
-            (self.value_corpus[i], i, score)
+            (self.value_corpus[i], i, score, self.key_corpus[i], query)
             for (score, i) in selected
         ]
 
@@ -269,12 +272,19 @@ def sample_replace(lines, dist_measurer, sample_rate, corpus_idx):
             sims = dist_measurer.most_similar(corpus_idx + i)[1:]  # top match is the current line
             try:
                 line = next((
-                    tgt_attr.split() for tgt_attr, _, _ in sims
+                    (tgt_attr.split(), tgt_content, src_content) for tgt_attr, _, _, tgt_content, src_content in sims
                     if set(tgt_attr.split()) != set(line[1:-1])  # and tgt_attr != ''   # TODO -- exclude blanks?
                 ))
+                query_content = line[2]
+                retrieved_content = line[1]
+                line = line[0]
             # all the matches are blanks
             except StopIteration:
+                query_content = ""
+                retrieved_content = ""
                 line = []
+
+            output_file.write(query_content + " ::: " + retrieved_content + " ::: " + " ".join(line) + "\n")
             line = ['<s>'] + line + ['</s>']
 
         # corner case: special tok for empty sequences (just start/end tok)
