@@ -11,7 +11,7 @@ from src.cuda import CUDA
 from nltk import ngrams
 from tools.parse import parse_sentence, retrieve_spans
 
-retrieve_output_file = "data/intermediate_outputs/retrieve.outputs.parse"
+retrieve_output_file = "data/intermediate_outputs/retrieve.outputs.unigram"
 output_file = open(retrieve_output_file, "w")
 
 class CorpusSearcher(object):
@@ -243,7 +243,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # src content and then we retrieve the tgt attribute from that
     else:
         tgt_dist_measurer = CorpusSearcher(
-            query_corpus=[' '.join(x) for x in train_src['content']],
+            query_corpus=[' '.join(x) for x in src['content']],
             key_corpus=[' '.join(x) for x in train_tgt['content']],
             value_corpus=[' '.join(x) for x in train_tgt['attribute']],
             vectorizer=TfidfVectorizer(vocabulary=tgt_tok2id),
