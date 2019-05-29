@@ -3,10 +3,11 @@
     "optimizer": "adam",
     "learning_rate": 0.0003,
     "max_norm": 3.0,
-    "epochs": 40,
+    "epochs": 70,
     "batches_per_report": 200,
     "batches_per_sampling": 500,
-    "random_seed": 1
+    "random_seed": 1,
+    "load_checkpoint": false
   },
   "data": {
     "src": "data/yelp/sentiment.train.0",
@@ -23,7 +24,7 @@
     "positive_parses": "span_candidates/candidates.positive.all",
     "batch_size": 256,
     "max_len": 50,
-    "working_dir": "working_dir"
+    "working_dir": "parse_wdir"
   },
     "model": {
         "model_type": "delete_retrieve",

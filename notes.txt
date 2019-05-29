@@ -26,4 +26,4 @@ delete attribute markers
 
 - format for output files:
     - delete: original sentence, content, marker candidates, chosen attribute markers
-    - retrieve:
+    - retrieve: original sentence content, similar content, opposite attribute markers

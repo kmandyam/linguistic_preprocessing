@@ -149,11 +149,6 @@ model = models.SeqModel(
 # get information about number of parameters in the model
 # try to load the model from the working directory
 logging.info('MODEL HAS %s params' % model.count_params())
-# model, start_epoch = models.attempt_load_model(
-#     model=model,
-#     checkpoint_dir=working_dir)
-if CUDA:
-    model = model.cuda()
 
 writer = SummaryWriter(working_dir)
 
@@ -189,6 +184,13 @@ start_epoch = 0
 
 # run for how many ever epochs based on whether we were able to
 # load model from a checkpoint
+if config['training']['load_checkpoint']:
+    model, start_epoch = models.attempt_load_model(
+        model=model,
+        checkpoint_dir=working_dir)
+if CUDA:
+    model = model.cuda()
+
 for epoch in range(start_epoch, config['training']['epochs']):
     losses = []
     # we loop through each of the training examples (just the content though)

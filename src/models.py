@@ -35,7 +35,7 @@ def attempt_load_model(model, checkpoint_dir=None, checkpoint_path=None):
         epoch = int(checkpoint_path.split('.')[-2])
 
     if checkpoint_path:
-        model.load_state_dict(torch.load(checkpoint_path))
+        model.load_state_dict(torch.load(checkpoint_path, map_location='cpu'))
         print('Load from %s sucessful!' % checkpoint_path)
         return model, epoch + 1
     else:

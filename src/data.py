@@ -243,7 +243,7 @@ def read_nmt_data(src, config, tgt, attribute_vocab, train_src=None, train_tgt=N
     # src content and then we retrieve the tgt attribute from that
     else:
         tgt_dist_measurer = CorpusSearcher(
-            query_corpus=[' '.join(x) for x in src['content']],
+            query_corpus=[' '.join(x) for x in train_src['content']],
             key_corpus=[' '.join(x) for x in train_tgt['content']],
             value_corpus=[' '.join(x) for x in train_tgt['attribute']],
             vectorizer=TfidfVectorizer(vocabulary=tgt_tok2id),

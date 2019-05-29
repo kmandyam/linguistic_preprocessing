@@ -3,7 +3,11 @@ deletion_method epochs  bleu_score  model notes
 parse   70  0.4438534446890862  delete  using parse.15.new
 unigram 70  0.47882872950938876 delete  using unigram.5
 ngram   70  0.4067933125849826  delete  using ngram.15
-original outputs
+
 parse   30  0.5014898276663442  delete_retrieve using parse.15.new
 unigram 30  0.544716358725337   delete_retrieve using unigram.5
 ngram   30  0.46767527049580226 delete_retrieve using ngram.15
+
+parse   40  0.40528398871690763 delete_retrieve using parse.15.new
+unigram 40  0.4547358972997176  delete_retrieve using unigram.5
+ngram   40  0.3983128605759996  delete_retrieve using ngram.15
