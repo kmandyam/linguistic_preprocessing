@@ -7,7 +7,7 @@
     "batches_per_report": 200,
     "batches_per_sampling": 500,
     "random_seed": 1,
-    "load_checkpoint": true
+    "load_checkpoint": false
   },
   "data": {
     "src": "data/yelp/sentiment.train.0",
@@ -19,15 +19,15 @@
     "src_vocab": "data/yelp/vocab",
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
-    "attribute_vocab": "attribute_markers/unigram.5",
+    "attribute_vocab": "attribute_markers/unigram.8",
     "negative_parses": "span_candidates/candidates.negative.all",
     "positive_parses": "span_candidates/candidates.positive.all",
     "batch_size": 256,
     "max_len": 50,
-    "working_dir": "delete_retrieve_working_dirs/unigram_delete_retrieve_working_dir_new"
+    "working_dir": "final_outputs/delete/unigram_8"
   },
     "model": {
-        "model_type": "delete_retrieve",
+        "model_type": "delete",
         "deletion_method": "unigram",
         "emb_dim": 128,
         "attention": false,

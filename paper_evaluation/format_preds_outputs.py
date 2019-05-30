@@ -1,5 +1,7 @@
 import sys
 
+# converting pryzant format predictions into li et. al format predictions
+
 # create a set of all the words in the original attribute vocab
 # first argument is the paper output for formatting purposes
 # second argument is the predictions file

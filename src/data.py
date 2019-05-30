@@ -11,7 +11,12 @@ from src.cuda import CUDA
 from nltk import ngrams
 from tools.parse import parse_sentence, retrieve_spans
 
-retrieve_output_file = "data/intermediate_outputs/retrieve.outputs.unigram"
+
+model = "delete"
+deletion_method = "unigram"
+thresh = 8
+retrieve_output_file = "data/intermediate_outputs/retrieve/" + model + ".outputs." + deletion_method + "." + str(thresh)
+
 output_file = open(retrieve_output_file, "w")
 
 class CorpusSearcher(object):
