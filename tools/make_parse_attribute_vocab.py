@@ -1,5 +1,5 @@
 """
-python make_ngram_attribute_vocab.py [corpus1 parses] [corpus2 parses] r
+python make_parse_attribute_vocab.py [corpus1 parses] [corpus2 parses] r
 
 subsets a file by finding the words most associated with
 one of two corpuses. threshold is r ( # in corpus_a  / # in corpus_b )

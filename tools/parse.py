@@ -1,6 +1,8 @@
 from allennlp.models.archival import load_archive
 from allennlp.service.predictors import Predictor
 
+import re
+
 archive = load_archive(
             "https://s3-us-west-2.amazonaws.com/allennlp/models/elmo-constituency-parser-2018.03.14.tar.gz"
         )
@@ -68,11 +70,11 @@ def find_children_combinations(children):
 
 
 # if __name__ == "__main__":
-#     sentence = "a little dirty on the inside , but wonderful people that work there"
+#     sentence = "she was not happy being there"
 #     sentence = re.sub("[.]", "", sentence)
 #     sentence = sentence.lower().strip()
 #
 #     parse = parse_sentence(sentence)
-#     spans = build_tree(parse)
+#     spans = retrieve_spans(parse)
 #     print(spans)
 

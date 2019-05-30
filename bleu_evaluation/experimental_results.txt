@@ -8,6 +8,6 @@ parse   30  0.5014898276663442  delete_retrieve using parse.15.new
 unigram 30  0.544716358725337   delete_retrieve using unigram.5
 ngram   30  0.46767527049580226 delete_retrieve using ngram.15
 
-parse   40  0.4037329553723171  delete_retrieve using parse.15.new
-unigram 40  0.4615275855439150  delete_retrieve using unigram.5
-ngram   40  0.4031192701552631  delete_retrieve using ngram.15
+parse   52  0.4229102797902279  delete_retrieve using parse.15.new
+unigram 49  0.4686545580032469  delete_retrieve using unigram.5
+ngram   49  0.4011501072829270  delete_retrieve using ngram.15

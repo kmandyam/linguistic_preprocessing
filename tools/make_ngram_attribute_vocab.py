@@ -9,6 +9,7 @@ import sys
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 import numpy as np
 from nltk import ngrams
+from tqdm import tqdm
 
 class NgramSalienceCalculator(object):
     def __init__(self, pre_corpus, post_corpus, tokenize):
@@ -87,7 +88,7 @@ sc = NgramSalienceCalculator(corpus1, corpus2, tokenize)
 
 print("marker", "negative_score", "positive_score")
 def calculate_attribute_markers(corpus):
-    for sentence in corpus:
+    for sentence in tqdm(corpus):
         for i in range(1, 5):
             i_grams = ngrams(sentence.split(), i)
             joined = [
