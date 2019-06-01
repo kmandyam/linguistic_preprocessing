@@ -142,12 +142,18 @@ class SeqModel(nn.Module):
         self.output_projection.bias.data.fill_(0)
 
     def forward(self, input_src, input_tgt, srcmask, srclens, input_attr, attrlens, attrmask):
+        # embed the source input (content)
         src_emb = self.src_embedding(input_src)
 
+        # convert the mask into a byte mask?
         srcmask = (1-srcmask).byte()
 
+        # run the content through the encoder, this produces the outputs and the
+        # hidden states (which are split into src_h_t and src_c_t for some reason)
         src_outputs, (src_h_t, src_c_t) = self.encoder(src_emb, srclens, srcmask)
 
+        # if we're using a bidirectional encoder, we concatenate the two parts
+        # of the encoder, otherwise, we keep just the first pass
         if self.options['bidirectional']:
             h_t = torch.cat((src_h_t[-1], src_h_t[-2]), 1)
             c_t = torch.cat((src_c_t[-1], src_c_t[-2]), 1)
@@ -155,6 +161,7 @@ class SeqModel(nn.Module):
             h_t = src_h_t[-1]
             c_t = src_c_t[-1]
 
+        # just a linear on the src outputs
         src_outputs = self.ctx_bridge(src_outputs)
 
 
@@ -163,14 +170,21 @@ class SeqModel(nn.Module):
         # TODO -- put this stuff in a method, overlaps w/above
 
         if self.model_type == 'delete':
-            # just do h i guess?
+            # encode the attribute with an attribute embedding
             a_ht = self.attribute_embedding(input_attr)
+            # concatenate the attribute embedding with the two parts of the
+            # hidden output from the lstm encoder
             c_t = torch.cat((c_t, a_ht), -1)
             h_t = torch.cat((h_t, a_ht), -1)
 
         elif self.model_type == 'delete_retrieve':
+            # embed the attribute markers and then run them through
+            # an lstm encoder
             attr_emb = self.src_embedding(input_attr)
             _, (a_ht, a_ct) = self.attribute_encoder(attr_emb, attrlens, attrmask)
+            # this is kinda the same as above, where we look at the two kinds of
+            # output that come out of the encoder and then we keep outputs
+            # based on bidirectionality
             if self.options['bidirectional']:
                 a_ht = torch.cat((a_ht[-1], a_ht[-2]), 1)
                 a_ct = torch.cat((a_ct[-1], a_ct[-2]), 1)
@@ -178,6 +192,8 @@ class SeqModel(nn.Module):
                 a_ht = a_ht[-1]
                 a_ct = a_ct[-1]
 
+            # concatenate the encoded attribute markers to the hidden states of the
+            # encoded content
             h_t = torch.cat((h_t, a_ht), -1)
             c_t = torch.cat((c_t, a_ct), -1)
             
@@ -186,6 +202,7 @@ class SeqModel(nn.Module):
 
         # # # #  # # # #  # #  # # # # # # #  # # end diff
 
+        # embed the target and run it through the decoder
         tgt_emb = self.tgt_embedding(input_tgt)
         tgt_outputs, (_, _) = self.decoder(
             tgt_emb,

@@ -17,9 +17,9 @@ import src.models as models
 
 outputs_dir = "/written_outputs"
 
-model = "delete"
-deletion_method = "unigram"
-thresh = 8
+model = "delete_retrieve"
+deletion_method = "ngram"
+thresh = 15
 intermediate_outputs_dir = "data/intermediate_outputs/delete/" + model + ".outputs." + deletion_method + "." + str(thresh)
 
 parser = argparse.ArgumentParser()
@@ -108,6 +108,7 @@ src_test, tgt_test = data.read_nmt_data(
 )
 logging.info('...done reading all data!')
 
+# writing the intermediate outputs of delete
 output_file = open(intermediate_outputs_dir, "w")
 data_len = len(src_test['data'])
 for i in range(data_len):

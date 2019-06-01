@@ -12,9 +12,9 @@ from nltk import ngrams
 from tools.parse import parse_sentence, retrieve_spans
 
 
-model = "delete"
-deletion_method = "unigram"
-thresh = 8
+model = "delete_retrieve"
+deletion_method = "ngram"
+thresh = 15
 retrieve_output_file = "data/intermediate_outputs/retrieve/" + model + ".outputs." + deletion_method + "." + str(thresh)
 
 output_file = open(retrieve_output_file, "w")
@@ -413,7 +413,7 @@ def minibatch(src, tgt, idx, batch_size, max_len, model_type, is_test=False):
         # during train time, these attributes are all going to be similar to the original ones
         attributes = get_minibatch(
             out_dataset['attribute'], out_dataset['tok2id'], idx, batch_size, max_len, idx=inputs[-1],
-            dist_measurer=out_dataset['dist_measurer'], sample_rate=1.0 if is_test else 0.25)
+            dist_measurer=out_dataset['dist_measurer'], sample_rate=1.0 if is_test else 0.1)
         # basically get the targets, this is the out_datset's data key which are all the
         # original lines
         outputs = get_minibatch(

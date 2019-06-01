@@ -97,8 +97,7 @@ class StackedAttentionLSTM(nn.Module):
     """
     def __init__(self, cell_class=AttentionalLSTM, config=None):
         super(StackedAttentionLSTM, self).__init__()
-        self.options=config['model']
-
+        self.options = config['model']
 
         self.dropout = nn.Dropout(self.options['dropout'])
 

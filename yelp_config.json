@@ -19,24 +19,24 @@
     "src_vocab": "data/yelp/vocab",
     "tgt_vocab": "data/yelp/vocab",
     "share_vocab": true,
-    "attribute_vocab": "attribute_markers/unigram.8",
+    "attribute_vocab": "attribute_markers/ngram.15",
     "negative_parses": "span_candidates/candidates.negative.all",
     "positive_parses": "span_candidates/candidates.positive.all",
     "batch_size": 256,
     "max_len": 50,
-    "working_dir": "final_outputs/delete/unigram_8"
+    "working_dir": "test_new_delete_retrieve"
   },
     "model": {
-        "model_type": "delete",
-        "deletion_method": "unigram",
+        "model_type": "delete_retrieve",
+        "deletion_method": "ngram",
         "emb_dim": 128,
-        "attention": false,
+        "attention": true,
         "encoder": "lstm",
         "src_hidden_dim": 512,
-        "src_layers": 1,
+        "src_layers": 2,
         "bidirectional": true,
         "tgt_hidden_dim": 512,
-        "tgt_layers": 1,
+        "tgt_layers": 2,
         "decode": "greedy",
         "dropout": 0.2
     }
