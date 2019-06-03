@@ -18,9 +18,9 @@ import src.models as models
 outputs_dir = "/written_outputs"
 
 model = "delete_retrieve"
-deletion_method = "ngram"
-thresh = 15
-intermediate_outputs_dir = "data/intermediate_outputs/delete/" + model + ".outputs." + deletion_method + "." + str(thresh)
+deletion_method = "unigram"
+thresh = 5
+intermediate_outputs_dir = "data/new_intermediate_outputs/delete/" + model + ".outputs." + deletion_method + "." + str(thresh)
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -258,9 +258,11 @@ for epoch in range(start_epoch, config['training']['epochs']):
     writer.add_scalar('eval/loss', dev_loss, epoch)
 
     # write the current checkpoint
-    logging.info('NEW DEV LOSS: %s. TIME: %.2fs CHECKPOINTING...' % (
+    logging.info('NEW DEV LOSS: %s. TIME: %.2fs' % (
         cur_metric, (time.time() - start)))
-    torch.save(model.state_dict(), working_dir + '/model.%s.ckpt' % epoch)
+    if epoch > 40:
+        logging.info('CHECKPOINTING....')
+        torch.save(model.state_dict(), working_dir + '/model.%s.ckpt' % epoch)
 
     avg_loss = np.mean(epoch_loss)
     epoch_loss = []

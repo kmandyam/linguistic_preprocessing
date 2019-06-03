@@ -13,9 +13,9 @@ from tools.parse import parse_sentence, retrieve_spans
 
 
 model = "delete_retrieve"
-deletion_method = "ngram"
-thresh = 15
-retrieve_output_file = "data/intermediate_outputs/retrieve/" + model + ".outputs." + deletion_method + "." + str(thresh)
+deletion_method = "unigram"
+thresh = 5
+retrieve_output_file = "data/new_intermediate_outputs/retrieve/" + model + ".outputs." + deletion_method + "." + str(thresh)
 
 output_file = open(retrieve_output_file, "w")
 
